@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: docforge_db
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: docforge
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - docforge_net
+
+  php-backend:
+    build:
+      context: ./php-backend
+      dockerfile: Dockerfile
+    container_name: docforge_php
+    ports:
+      - "8080:80"
+    environment:
+      DB_HOST: db
+      DB_NAME: docforge
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+    volumes:
+      - ./php-backend:/var/www/html
+    depends_on:
+      - db
+    networks:
+      - docforge_net
+
+  flask-ai:
+    build:
+      context: ./flask-ai
+      dockerfile: Dockerfile
+    container_name: docforge_flask
+    ports:
+      - "5000:5000"
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      DB_HOST: db
+      DB_NAME: docforge
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+    volumes:
+      - ./flask-ai:/app
+    depends_on:
+      - db
+    networks:
+      - docforge_net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: docforge_nginx
+    ports:
+      - "3000:80"
+    networks:
+      - docforge_net
+
+volumes:
+  pgdata:
+
+networks:
+  docforge_net:
+    driver: bridge

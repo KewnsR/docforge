@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, send_from_directory
 from flask_cors import CORS
 import openai
 import os
@@ -20,6 +20,23 @@ openai.api_key = os.getenv('OPENAI_API_KEY')
 ai_processor = AIProcessor()
 diagram_generator = DiagramGenerator()
 file_parser = FileParser()
+
+@app.route('/', methods=['GET'])
+def index():
+    """Root endpoint showing service status and endpoints"""
+    return jsonify({
+        'status': 'online',
+        'service': 'DocForge AI Service',
+        'version': '1.0.0',
+        'message': 'Welcome to the DocForge AI Service. API endpoints are operational.',
+        'endpoints': [
+            {'path': '/health', 'methods': ['GET'], 'description': 'Health status check'},
+            {'path': '/generate/api', 'methods': ['POST'], 'description': 'Generate API documentation'},
+            {'path': '/generate/readme', 'methods': ['POST'], 'description': 'Generate README.md'},
+            {'path': '/generate/diagram', 'methods': ['POST'], 'description': 'Generate architecture diagram'},
+            {'path': '/export', 'methods': ['POST'], 'description': 'Export markdown to PDF'}
+        ]
+    })
 
 @app.route('/health', methods=['GET'])
 def health_check():
@@ -81,13 +98,18 @@ def generate_diagram():
         diagram_path = diagram_generator.create_architecture_diagram(code_structure)
         return jsonify({
             'success': True,
-            'diagram_url': f'/diagrams/{diagram_path}',
+            'diagram_url': f'http://localhost:5000/diagrams/{diagram_path}',
             'format': 'png',
             'service': 'DocForge'
         })
     except Exception as e:
         logger.error(f"Error generating diagram: {str(e)}")
         return jsonify({'error': str(e), 'service': 'DocForge'}), 500
+
+@app.route('/diagrams/<path:filename>', methods=['GET'])
+def serve_diagram(filename):
+    """Serve dynamically generated architecture diagrams"""
+    return send_from_directory('diagrams', filename)
 
 @app.route('/export', methods=['POST'])
 def export_documentation():
@@ -99,14 +121,16 @@ def export_documentation():
     try:
         if format_type == 'pdf':
             import pdfkit
-            pdf_path = f"/tmp/docforge_{hash(content)}.pdf"
+            import tempfile
+            temp_dir = tempfile.gettempdir()
+            pdf_path = os.path.join(temp_dir, f"docforge_{abs(hash(content))}.pdf")
             pdfkit.from_string(content, pdf_path)
             
             return send_file(
                 pdf_path,
                 mimetype='application/pdf',
                 as_attachment=True,
-                download_name=f'docforge_documentation.pdf'
+                download_name='docforge_documentation.pdf'
             )
         else:
             return jsonify({

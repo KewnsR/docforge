@@ -1,7 +1,4 @@
-CREATE DATABASE IF NOT EXISTS docforge;
-\c docforge;
-
-CREATE TABLE projects (
+CREATE TABLE IF NOT EXISTS projects (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -9,7 +6,7 @@ CREATE TABLE projects (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE documents (
+CREATE TABLE IF NOT EXISTS documents (
     id SERIAL PRIMARY KEY,
     project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
     type VARCHAR(50) NOT NULL, -- 'api', 'readme', 'architecture'
@@ -18,7 +15,7 @@ CREATE TABLE documents (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE files (
+CREATE TABLE IF NOT EXISTS files (
     id SERIAL PRIMARY KEY,
     project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
     filename VARCHAR(255),
@@ -27,9 +24,12 @@ CREATE TABLE files (
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_project_id ON documents(project_id);
-CREATE INDEX idx_file_project ON files(project_id);
+CREATE INDEX IF NOT EXISTS idx_project_id ON documents(project_id);
+CREATE INDEX IF NOT EXISTS idx_file_project ON files(project_id);
 
 -- Insert welcome data
-INSERT INTO projects (name, description) VALUES 
-('Welcome to DocForge', 'Your AI-powered documentation generator');
+INSERT INTO projects (name, description) 
+SELECT 'Welcome to DocForge', 'Your AI-powered documentation generator'
+WHERE NOT EXISTS (
+    SELECT 1 FROM projects WHERE name = 'Welcome to DocForge'
+);

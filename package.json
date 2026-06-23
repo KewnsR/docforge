@@ -1,0 +1,15 @@
+{
+  "name": "docforge",
+  "version": "1.0.0",
+  "description": "DocForge - AI-Powered Documentation Generator",
+  "scripts": {
+    "start:frontend": "npm --prefix frontend run dev",
+    "start:backend": "php -S localhost:8080 php-backend/router.php",
+    "start:ai": "python flask-ai/app.py",
+    "docker:up": "docker-compose up --build",
+    "docker:down": "docker-compose down"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

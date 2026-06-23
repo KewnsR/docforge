@@ -7,7 +7,7 @@
 
 **DocForge** is an intelligent, open-source documentation generator that uses AI to automatically create comprehensive documentation from your codebase. Save hours of manual documentation work!
 
-## ✨ Features
+## Features
 
 - 🤖 **AI-Powered Documentation** - Uses OpenAI GPT to generate high-quality docs
 - 📚 **Auto API Documentation** - Parse your code and generate API references
@@ -16,9 +16,8 @@
 - 💾 **Multiple Export Formats** - Export to Markdown, PDF, and more
 - 🌐 **Multi-Language Support** - PHP, Python, JavaScript, Java, Go, Rust
 - 🐳 **Docker Ready** - Easy deployment with Docker Compose
-- 🎨 **Modern UI** - Clean, responsive web interface
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
