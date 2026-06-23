@@ -6,16 +6,51 @@ const HOST_IP = window.location.hostname || 'localhost';
 const BACKEND_URL = `http://${HOST_IP}:8080`;
 const AI_SERVICE_URL = `http://${HOST_IP}:5000`;
 
+// Mock Demo Data for Guest Mode
+const DEMO_PROJECT = {
+  id: 'demo',
+  name: 'Welcome & Demo Project',
+  description: 'This is a read-only local demo project. Log in or create an account to create your own projects, upload files, and run AI generation!'
+};
+
+const DEMO_FILES = [
+  {
+    filename: 'main.py',
+    content: `import math\n\nclass Calculator:\n    def add(self, a, b):\n        \"\"\"Adds two numbers together\"\"\"\n        return a + b\n    \n    def sqrt(self, x):\n        \"\"\"Returns the square root of a number\"\"\"\n        return math.sqrt(x)`
+  },
+  {
+    filename: 'api.js',
+    content: `import axios from 'axios';\n\nexport const fetchWeather = async (city) => {\n  // Fetches weather data for a specific city\n  const response = await axios.get(\`/api/weather?city=\${city}\`);\n  return response.data;\n};`
+  }
+];
+
+const DEMO_DOCUMENTS = {
+  api: `# API Documentation - Demo Project\n\nThis is a preview of the generated API documentation for the demo project.\n\n## Python module: \`main.py\`\n### Class: \`Calculator\`\nHelper class for basic arithmetic operations.\n\n#### Method: \`add(self, a, b)\`\n*   **Arguments:** \`a\` (number), \`b\` (number)\n*   **Returns:** Sum of the two parameters.\n\n#### Method: \`sqrt(self, x)\`\n*   **Arguments:** \`x\` (number)\n*   **Returns:** Square root of \`x\`.\n\n---\n\n## JavaScript module: \`api.js\`\n### Function: \`fetchWeather(city)\`\nFetches current weather information from the system endpoint.\n*   **Arguments:** \`city\` (string)\n*   **Returns:** Promise resolving to weather object.`,
+  readme: `# Demo Project README\n\nWelcome to the Demo Project! This is a simple preview showing how DocForge structures your generated document.\n\n## Features\n- Mathematical utility classes in Python.\n- Weather API integration functions in ES6 JavaScript.\n\n## Setup Instructions\n1. Clone the repository.\n2. Install dependencies:\n   \`\`\`bash\n   npm install\n   pip install -r requirements.txt\n   \`\`\`\n3. Run test suites.`,
+  architecture: '' // No diagram URL for demo
+};
+
 export default function App() {
   // Theme State
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
 
+  // Auth States
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('user');
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
+  const [authUsername, setAuthUsername] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
+
   // App States
   const [projects, setProjects] = useState([]);
-  const [currentProjectId, setCurrentProjectId] = useState(null);
-  const [currentProject, setCurrentProject] = useState(null);
-  const [uploadedFiles, setUploadedFiles] = useState([]);
-  const [documents, setDocuments] = useState({ api: '', readme: '' });
+  const [currentProjectId, setCurrentProjectId] = useState('demo'); // Default to demo project
+  const [currentProject, setCurrentProject] = useState(DEMO_PROJECT);
+  const [uploadedFiles, setUploadedFiles] = useState(DEMO_FILES);
+  const [documents, setDocuments] = useState(DEMO_DOCUMENTS);
   const [diagramUrl, setDiagramUrl] = useState('');
   const [activeTab, setActiveTab] = useState('api');
   const [generating, setGenerating] = useState(false);
@@ -25,6 +60,7 @@ export default function App() {
   // New Project Form State
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDesc, setNewProjectDesc] = useState('');
+  const [showNewProjectModal, setShowNewProjectModal] = useState(false);
 
   // Toast State
   const [toasts, setToasts] = useState([]);
@@ -39,14 +75,20 @@ export default function App() {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  // Load projects list on startup and setup auto-refresh
+  // Load projects list on startup / when user changes
   useEffect(() => {
-    loadProjects();
-    const interval = setInterval(() => {
+    if (user) {
       loadProjects();
-    }, 15000);
-    return () => clearInterval(interval);
-  }, [currentProjectId]);
+      setCurrentProjectId(null); // Clear demo selection and let them select their projects
+    } else {
+      setProjects([DEMO_PROJECT]);
+      setCurrentProjectId('demo');
+      setCurrentProject(DEMO_PROJECT);
+      setUploadedFiles(DEMO_FILES);
+      setDocuments(DEMO_DOCUMENTS);
+      setDiagramUrl('');
+    }
+  }, [user]);
 
   // Handle Loading files & documents when project changes
   useEffect(() => {
@@ -58,8 +100,22 @@ export default function App() {
       return;
     }
 
+    if (currentProjectId === 'demo') {
+      setCurrentProject(DEMO_PROJECT);
+      setUploadedFiles(DEMO_FILES);
+      setDocuments(DEMO_DOCUMENTS);
+      setDiagramUrl('');
+      return;
+    }
+
+    if (!user) return;
+
+    const headers = {
+      'Authorization': String(user.id)
+    };
+
     // 1. Fetch Project Details
-    fetch(`${BACKEND_URL}/api/projects/${currentProjectId}`)
+    fetch(`${BACKEND_URL}/api/projects/${currentProjectId}`, { headers })
       .then(res => {
         if (!res.ok) throw new Error('Failed to load project details');
         return res.json();
@@ -74,7 +130,7 @@ export default function App() {
       });
 
     // 2. Fetch Project Files
-    fetch(`${BACKEND_URL}/api/projects/${currentProjectId}/files`)
+    fetch(`${BACKEND_URL}/api/projects/${currentProjectId}/files`, { headers })
       .then(res => {
         if (!res.ok) throw new Error('Failed to load files');
         return res.json();
@@ -91,7 +147,7 @@ export default function App() {
       });
 
     // 3. Fetch Project Documents
-    fetch(`${BACKEND_URL}/api/projects/${currentProjectId}/documents`)
+    fetch(`${BACKEND_URL}/api/projects/${currentProjectId}/documents`, { headers })
       .then(res => {
         if (!res.ok) throw new Error('Failed to load documents');
         return res.json();
@@ -109,7 +165,6 @@ export default function App() {
 
         setDocuments({ api: apiContent, readme: readmeContent });
         if (diagram) {
-          // Map localhost to hostname dynamically
           const mappedUrl = diagram.replace('localhost', HOST_IP);
           setDiagramUrl(mappedUrl);
         } else {
@@ -120,7 +175,7 @@ export default function App() {
         console.error(err);
         showToast('Failed to load project documents', 'error');
       });
-  }, [currentProjectId]);
+  }, [currentProjectId, user]);
 
   // Utility to show toasts
   const showToast = (message, type = 'info') => {
@@ -136,9 +191,72 @@ export default function App() {
     setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
   };
 
+  // Trigger Auth modal opening with a message
+  const triggerAuthPrompt = (message = 'Authentication required to use this feature.') => {
+    showToast(message, 'warning');
+    setAuthMode('login');
+    setShowAuthModal(true);
+  };
+
+  // Handle Authentication (Login / Signup)
+  const handleAuth = (e) => {
+    e.preventDefault();
+    if (!authUsername.trim() || !authPassword.trim()) {
+      showToast('Please fill out all fields', 'warning');
+      return;
+    }
+
+    setAuthLoading(true);
+    const endpoint = authMode === 'signup' ? '/api/auth/signup' : '/api/auth/login';
+    
+    fetch(`${BACKEND_URL}${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: authUsername, password: authPassword })
+    })
+      .then(res => {
+        if (!res.ok) {
+          return res.json().then(err => { throw new Error(err.error || 'Authentication failed'); });
+        }
+        return res.json();
+      })
+      .then(data => {
+        setAuthLoading(false);
+        if (authMode === 'signup') {
+          showToast('Registration successful! Please login.', 'success');
+          setAuthMode('login');
+          setAuthPassword('');
+        } else {
+          showToast(`Welcome back, ${data.username}!`, 'success');
+          const userData = { id: data.id, username: data.username };
+          setUser(userData);
+          localStorage.setItem('user', JSON.stringify(userData));
+          setShowAuthModal(false);
+          // Reset form fields
+          setAuthUsername('');
+          setAuthPassword('');
+        }
+      })
+      .catch(err => {
+        setAuthLoading(false);
+        console.error(err);
+        showToast(err.message || 'Authentication error', 'error');
+      });
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setCurrentProjectId('demo');
+    localStorage.removeItem('user');
+    showToast('Logged out successfully', 'info');
+  };
+
   // Load Projects from Database
   const loadProjects = () => {
-    fetch(`${BACKEND_URL}/api/projects`)
+    if (!user) return;
+    fetch(`${BACKEND_URL}/api/projects`, {
+      headers: { 'Authorization': String(user.id) }
+    })
       .then(res => {
         if (!res.ok) throw new Error('Backend Offline');
         return res.json();
@@ -150,13 +268,19 @@ export default function App() {
       .catch(err => {
         if (backendOnline) {
           setBackendOnline(false);
-          showToast(`Unable to connect to PHP backend at ${BACKEND_URL}`, 'error');
+          showToast(`Unable to connect to PHP backend.`, 'error');
         }
       });
   };
 
   // Create Project
-  const createProject = () => {
+  const createProject = (e) => {
+    e.preventDefault();
+    if (!user) {
+      triggerAuthPrompt('Please sign in or register to create custom projects.');
+      return;
+    }
+
     if (!newProjectName.trim()) {
       showToast('Please enter a project name', 'warning');
       return;
@@ -164,7 +288,10 @@ export default function App() {
 
     fetch(`${BACKEND_URL}/api/projects`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': String(user.id)
+      },
       body: JSON.stringify({ name: newProjectName, description: newProjectDesc })
     })
       .then(res => {
@@ -177,6 +304,7 @@ export default function App() {
         showToast(`Project "${newProjectName}" created successfully!`, 'success');
         setNewProjectName('');
         setNewProjectDesc('');
+        setShowNewProjectModal(false);
         setCurrentProjectId(response.id);
         loadProjects();
       })
@@ -188,6 +316,15 @@ export default function App() {
 
   // Delete Project
   const deleteCurrentProject = () => {
+    if (currentProjectId === 'demo') {
+      showToast('The demo project cannot be deleted.', 'warning');
+      return;
+    }
+    if (!user) {
+      triggerAuthPrompt('Please sign in to manage projects.');
+      return;
+    }
+
     if (!currentProjectId || !currentProject) return;
 
     if (!confirm(`Are you sure you want to delete project "${currentProject.name}"? This will permanently delete all uploaded files and generated documents.`)) {
@@ -195,7 +332,8 @@ export default function App() {
     }
 
     fetch(`${BACKEND_URL}/api/projects/${currentProjectId}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: { 'Authorization': String(user.id) }
     })
       .then(res => {
         if (!res.ok) throw new Error('Delete failed');
@@ -214,8 +352,12 @@ export default function App() {
 
   // Handle local File Reading & DB Upload
   const handleFiles = (filesList) => {
-    if (!currentProjectId) {
-      showToast('Please select or create a project first!', 'warning');
+    if (!user) {
+      triggerAuthPrompt('Please sign in to upload your project files.');
+      return;
+    }
+    if (!currentProjectId || currentProjectId === 'demo') {
+      showToast('Please select or create a custom project first!', 'warning');
       return;
     }
 
@@ -256,10 +398,12 @@ export default function App() {
   };
 
   const uploadFiles = (formData, tempFiles) => {
+    if (!user) return;
     showToast('Uploading files to database...', 'info');
 
     fetch(`${BACKEND_URL}/api/upload.php`, {
       method: 'POST',
+      headers: { 'Authorization': String(user.id) },
       body: formData
     })
       .then(res => {
@@ -291,526 +435,668 @@ export default function App() {
       });
   };
 
-  // Generate All Documentation
+  // Generate Documentation
   const generateDocumentation = () => {
-    if (!currentProjectId) {
-      showToast('Please select or create a project first!', 'warning');
+    if (!user) {
+      triggerAuthPrompt('Please sign in or sign up to run AI generation.');
       return;
     }
-
+    if (!currentProjectId || currentProjectId === 'demo') {
+      showToast('Please select or create a custom project first!', 'warning');
+      return;
+    }
     if (uploadedFiles.length === 0) {
-      showToast('Please upload some files first!', 'warning');
+      showToast('Please upload some source files first!', 'warning');
       return;
     }
 
     setGenerating(true);
-    showToast('Generating docs with AI... This may take a moment.', 'info');
+    showToast('AI is generating documentation...', 'info');
 
     const filesContentArray = uploadedFiles.map(f => ({
-      filename: f.filename,
+      name: f.filename,
       content: f.content
     }));
 
-    // Promise 1: Generate API Docs
-    const apiPromise = fetch(`${AI_SERVICE_URL}/generate/api`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ project_id: currentProjectId, files_content: filesContentArray })
-    })
-      .then(res => res.json())
-      .then(res => {
-        if (res.success) {
-          setDocuments(prev => ({ ...prev, api: res.documentation }));
-          saveDocumentToDB(currentProjectId, 'api', res.documentation);
-          showToast('API docs generated!', 'success');
-        } else {
-          throw new Error('API docs failed');
-        }
+    if (activeTab === 'api') {
+      fetch(`${AI_SERVICE_URL}/generate/api`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ project_id: currentProjectId, files_content: filesContentArray })
+      })
+        .then(res => {
+          if (!res.ok) throw new Error('Generation failed');
+          return res.json();
+        })
+        .then(data => {
+          const mdContent = data.documentation;
+          setDocuments(prev => ({ ...prev, api: mdContent }));
+          return saveDocToDB('api', mdContent);
+        })
+        .catch(err => {
+          console.error(err);
+          showToast('Failed to generate API docs.', 'error');
+          setGenerating(false);
+        });
+    } else if (activeTab === 'readme') {
+      const summary = uploadedFiles.map(f => f.filename).join(', ');
+      fetch(`${AI_SERVICE_URL}/generate/readme`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          project_info: { name: currentProject.name, description: currentProject.description },
+          files_summary: summary
+        })
+      })
+        .then(res => {
+          if (!res.ok) throw new Error('Generation failed');
+          return res.json();
+        })
+        .then(data => {
+          const mdContent = data.readme;
+          setDocuments(prev => ({ ...prev, readme: mdContent }));
+          return saveDocToDB('readme', mdContent);
+        })
+        .catch(err => {
+          console.error(err);
+          showToast('Failed to generate README.', 'error');
+          setGenerating(false);
+        });
+    } else if (activeTab === 'architecture') {
+      const struct = {};
+      uploadedFiles.forEach(f => {
+        struct[f.filename] = { size: f.content.length };
       });
 
-    // Promise 2: Generate README
-    const readmePromise = fetch(`${AI_SERVICE_URL}/generate/readme`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        project_info: {
-          name: currentProject?.name || 'DocForge Project',
-          description: currentProject?.description || 'Generated with DocForge'
-        },
-        files_summary: `Project contains ${uploadedFiles.length} files: ` + uploadedFiles.map(f => f.filename).join(', ')
+      fetch(`${AI_SERVICE_URL}/generate/diagram`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code_structure: struct })
       })
-    })
-      .then(res => res.json())
-      .then(res => {
-        if (res.success) {
-          setDocuments(prev => ({ ...prev, readme: res.readme }));
-          saveDocumentToDB(currentProjectId, 'readme', res.readme);
-          showToast('README generated!', 'success');
-        } else {
-          throw new Error('README failed');
-        }
-      });
+        .then(res => {
+          if (!res.ok) throw new Error('Diagram generation failed');
+          return res.json();
+        })
+        .then(data => {
+          const url = data.diagram_url.replace('localhost', HOST_IP);
+          setDiagramUrl(url);
+          return saveDocToDB('architecture', url);
+        })
+        .catch(err => {
+          console.error(err);
+          showToast('Failed to generate Architecture Diagram.', 'error');
+          setGenerating(false);
+        });
+    }
+  };
 
-    // Promise 3: Generate Diagram
-    const diagramPromise = fetch(`${AI_SERVICE_URL}/generate/diagram`, {
+  // Save generated document to database
+  const saveDocToDB = (type, content) => {
+    if (!user) return;
+    return fetch(`${BACKEND_URL}/api/projects/${currentProjectId}/documents`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        code_structure: {
-          files: uploadedFiles,
-          project_name: currentProject?.name
-        }
-      })
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': String(user.id)
+      },
+      body: JSON.stringify({ type, content, format: 'markdown' })
     })
-      .then(res => res.json())
       .then(res => {
-        if (res.success) {
-          const mappedUrl = res.diagram_url.replace('localhost', HOST_IP);
-          setDiagramUrl(mappedUrl + '?t=' + new Date().getTime());
-          saveDocumentToDB(currentProjectId, 'architecture', mappedUrl, 'url');
-          showToast('Architecture diagram generated!', 'success');
-        } else {
-          throw new Error('Diagram failed');
-        }
-      });
-
-    // Resolve all promises
-    Promise.all([apiPromise, readmePromise, diagramPromise])
-      .catch(err => {
-        console.error(err);
-        showToast('Documentation generation encountered an issue.', 'error');
+        if (!res.ok) throw new Error('Save failed');
+        return res.json();
       })
-      .finally(() => {
+      .then(() => {
+        showToast('Documentation saved to project database!', 'success');
         setGenerating(false);
       });
   };
 
-  // Save Document to Database
-  const saveDocumentToDB = (projectId, type, content, format = 'markdown') => {
-    fetch(`${BACKEND_URL}/api/projects/${projectId}/documents`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type, content, format })
-    })
-      .then(res => res.json())
-      .then(() => {
-        console.log(`Saved ${type} to database`);
-      })
-      .catch(err => console.error(`Error saving ${type} document:`, err));
+  // Clipboard Copier
+  const copyToClipboard = () => {
+    const content = documents[activeTab];
+    if (!content) return;
+    navigator.clipboard.writeText(content).then(() => {
+      showToast('Copied markdown to clipboard!', 'success');
+    });
   };
 
-  // Copy to Clipboard
-  const copyToClipboard = (type) => {
-    const text = documents[type];
-    if (!text) {
-      showToast('No content to copy', 'warning');
-      return;
-    }
+  // Export File Download Handler
+  const exportDoc = (format) => {
+    const content = documents[activeTab];
+    if (!content) return;
 
-    navigator.clipboard.writeText(text).then(
-      () => showToast('Markdown copied to clipboard!', 'success'),
-      () => showToast('Failed to copy to clipboard', 'error')
-    );
-  };
-
-  // Export Documentation
-  const exportDoc = (type, format) => {
-    const content = documents[type];
-    if (!content) {
-      showToast('No content to export', 'warning');
-      return;
-    }
-
-    if (format === 'pdf') {
-      showToast('Exporting PDF...', 'info');
+    if (format === 'markdown') {
+      const element = document.createElement("a");
+      const file = new Blob([content], { type: 'text/plain' });
+      element.href = URL.createObjectURL(file);
+      element.download = `docforge_${activeTab}.md`;
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+      showToast('Markdown downloaded!', 'success');
+    } else if (format === 'pdf') {
+      showToast('Generating PDF file...', 'info');
       fetch(`${AI_SERVICE_URL}/export`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content, format: 'pdf' })
       })
         .then(res => {
-          if (!res.ok) throw new Error('Export failed');
+          if (!res.ok) throw new Error('PDF Generation failed');
           return res.blob();
         })
         .then(blob => {
           const url = window.URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `docforge_${type}_documentation.pdf`;
+          a.download = `docforge_${activeTab}.pdf`;
           document.body.appendChild(a);
           a.click();
-          window.URL.revokeObjectURL(url);
-          showToast('PDF exported successfully!', 'success');
+          a.remove();
+          showToast('PDF downloaded successfully!', 'success');
         })
         .catch(err => {
           console.error(err);
-          showToast('PDF export failed. Make sure wkhtmltopdf is installed.', 'error');
+          showToast('Failed to export PDF.', 'error');
         });
-    } else {
-      // Export as Markdown
-      const blob = new Blob([content], { type: 'text/markdown' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `docforge_${type}_documentation.md`;
-      document.body.appendChild(a);
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast('Markdown exported successfully!', 'success');
     }
   };
 
-  // Drag and drop handlers
-  const handleDragOver = (e) => {
+  // File Drag-Drop Event handlers
+  const onDragOver = (e) => {
     e.preventDefault();
     setDragOver(true);
   };
-  const handleDragLeave = () => {
+  const onDragLeave = () => {
     setDragOver(false);
   };
-  const handleDrop = (e) => {
+  const onDrop = (e) => {
     e.preventDefault();
     setDragOver(false);
+    if (!user) {
+      triggerAuthPrompt('Please sign in to upload your project files.');
+      return;
+    }
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       handleFiles(e.dataTransfer.files);
     }
   };
 
+  const handleCreateProjectBtnClick = () => {
+    if (!user) {
+      triggerAuthPrompt('Please sign in to create new projects.');
+    } else {
+      setShowNewProjectModal(true);
+    }
+  };
+
   return (
-    <div>
-      {/* Toast HUD */}
-      <div className="toast-container-custom">
-        {toasts.map(toast => (
-          <div key={toast.id} className="toast-custom">
-            <div className="toast-custom-header">
-              <span className="fw-bold">
-                <i className="fas fa-hammer me-1 text-primary"></i> DocForge
-              </span>
-              <button className="btn-close btn-close-white" style={{ fontSize: '10px' }} onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}></button>
-            </div>
-            <div className="toast-custom-body">
-              <i className={`fas ${toast.type === 'success' ? 'fa-check-circle text-success' : toast.type === 'error' ? 'fa-exclamation-circle text-danger' : toast.type === 'warning' ? 'fa-exclamation-triangle text-warning' : 'fa-info-circle text-primary'} me-2`}></i>
-              {toast.message}
-            </div>
+    <div className="app-container">
+      {/* Toast notifications */}
+      <div className="toast-wrapper">
+        {toasts.map(t => (
+          <div key={t.id} className={`toast-item toast-${t.type}`}>
+            {t.message}
           </div>
         ))}
       </div>
 
-      {/* Navigation */}
-      <nav className="navbar navbar-premium navbar-dark mb-4">
-        <div className="container">
-          <span className="navbar-brand">
-            <i className="fas fa-hammer me-2 text-primary"></i>
-            <strong>DocForge</strong> - AI Documentation Generator
-          </span>
-          <div className="d-flex align-items-center">
-            <button id="themeToggle" className="btn btn-sm btn-outline-premium me-3" onClick={toggleTheme} title="Toggle Theme">
-              <i id="themeIcon" className={`fas ${theme === 'dark' ? 'fa-moon' : 'fa-sun'}`}></i>
-            </button>
-            <div className="text-secondary small">
-              <i className="fas fa-robot text-primary me-1"></i> Powered by OpenAI
-            </div>
+      {/* Header */}
+      <header className="main-header d-flex justify-content-between align-items-center px-4 py-3">
+        <div className="logo-section d-flex align-items-center">
+          <div className="brand-logo-container me-2">
+            <i className="fa-solid fa-cubes-stacked text-primary"></i>
           </div>
+          <span className="brand-name">DocForge</span>
+          <span className="badge bg-secondary ms-2 text-uppercase">v1.0</span>
         </div>
-      </nav>
 
-      <div className="container mt-4">
-        <div className="row">
-          {/* Sidebar */}
-          <div className="col-lg-4 col-md-5 mb-4">
-            
-            {/* Select Project Card */}
-            <div className="card shadow-sm mb-3">
-              <div className="card-header">
-                <h5 className="card-title">
-                  <i className="fas fa-folder-open text-primary me-2"></i>Select Project
-                </h5>
+        <div className="user-controls-section d-flex align-items-center gap-3">
+          {user ? (
+            <>
+              <div className={`connection-status d-flex align-items-center gap-1.5 ${backendOnline ? 'online' : 'offline'}`}>
+                <span className="status-dot"></span>
+                <span className="status-text">{backendOnline ? 'API Connected' : 'API Offline'}</span>
               </div>
-              <div className="card-body">
-                <select 
-                  id="projectSelect" 
-                  className="form-select" 
-                  value={currentProjectId || ''} 
-                  onChange={(e) => setCurrentProjectId(e.target.value ? parseInt(e.target.value) : null)}
-                >
-                  <option value="">-- Choose Project --</option>
-                  {projects.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
+
+              <div className="user-profile d-flex align-items-center gap-2">
+                <div className="user-avatar">
+                  <i className="fa-solid fa-user"></i>
+                </div>
+                <span className="user-name">{user.username}</span>
               </div>
+
+              <button onClick={toggleTheme} className="theme-toggle-btn" aria-label="Toggle theme">
+                <i className={theme === 'light' ? 'fa-solid fa-moon' : 'fa-solid fa-sun'}></i>
+              </button>
+
+              <button onClick={handleLogout} className="btn-logout" title="Logout">
+                <i className="fa-solid fa-right-from-bracket"></i>
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="connection-status d-flex align-items-center gap-1.5 online">
+                <span className="status-dot"></span>
+                <span className="status-text">Guest Mode</span>
+              </div>
+
+              <button 
+                onClick={() => { setAuthMode('login'); setShowAuthModal(true); }} 
+                className="btn btn-secondary px-3 py-1.5 fw-semibold"
+              >
+                Sign In
+              </button>
+
+              <button 
+                onClick={() => { setAuthMode('signup'); setShowAuthModal(true); }} 
+                className="btn btn-primary px-3 py-1.5 fw-semibold"
+              >
+                Register
+              </button>
+
+              <button onClick={toggleTheme} className="theme-toggle-btn" aria-label="Toggle theme">
+                <i className={theme === 'light' ? 'fa-solid fa-moon' : 'fa-solid fa-sun'}></i>
+              </button>
+            </>
+          )}
+        </div>
+      </header>
+
+      {/* Main Workspace */}
+      <div className="main-layout d-flex">
+        {/* Sidebar */}
+        <aside className="sidebar-section px-3 py-4">
+          <div className="project-control-card">
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h5 className="sidebar-title m-0">Projects</h5>
+              <button 
+                onClick={handleCreateProjectBtnClick} 
+                className="btn-new-project" 
+                title="Create Project"
+              >
+                <i className="fa-solid fa-plus"></i>
+              </button>
             </div>
 
-            {/* Project Configuration */}
-            <div className="card shadow-sm mb-3">
-              <div className="card-header">
-                <h5 className="card-title">
-                  <i className="fas fa-plus-circle text-primary me-2"></i>New Project
-                </h5>
-              </div>
-              <div className="card-body">
-                <div className="mb-3">
-                  <label className="form-label small text-secondary">Project Name</label>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    placeholder="My Awesome Project"
-                    value={newProjectName}
-                    onChange={(e) => setNewProjectName(e.target.value)}
-                  />
-                </div>
-                <div className="mb-3">
-                  <label className="form-label small text-secondary">Description</label>
-                  <textarea 
-                    className="form-control" 
-                    rows="3" 
-                    placeholder="Describe what your project does..."
-                    value={newProjectDesc}
-                    onChange={(e) => setNewProjectDesc(e.target.value)}
-                  />
-                </div>
-                <button className="btn btn-primary-premium w-100" onClick={createProject}>
-                  <i className="fas fa-plus-circle me-1"></i> Create Project
-                </button>
-              </div>
-            </div>
-
-            {/* File Upload Card */}
-            <div className="card shadow-sm mb-3">
-              <div className="card-header">
-                <h5 className="card-title">
-                  <i className="fas fa-upload text-primary me-2"></i>Upload Files
-                </h5>
-              </div>
-              <div className="card-body">
-                <div 
-                  id="dropZone" 
-                  className={`drop-zone ${dragOver ? 'drag-over' : ''}`}
-                  onClick={() => fileInputRef.current?.click()}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                >
-                  <i className="fas fa-cloud-upload-alt fa-3x text-primary mb-2"></i>
-                  <p className="mb-1 fw-bold">Drag & drop files here</p>
-                  <p className="text-secondary small mb-0">or click to select</p>
-                  <small className="text-muted d-block mt-2" style={{ fontSize: '10px' }}>PHP, Python, JS, TS, Java, Go, Rust</small>
-                  <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    multiple 
-                    style={{ display: 'none' }} 
-                    onChange={(e) => handleFiles(e.target.files)}
-                  />
-                </div>
-                
-                {/* File List */}
-                <div id="fileList" className="mt-3" style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                  {uploadedFiles.length === 0 ? (
-                    <div className="text-muted text-center py-2" style={{ fontSize: '13px' }}>No files uploaded yet</div>
-                  ) : (
-                    <div className="list-group">
-                      {uploadedFiles.map((file, idx) => (
-                        <div key={idx} className="list-group-item d-flex justify-content-between align-items-center">
-                          <div className="text-truncate me-2" style={{ maxWidth: '80%' }}>
-                            <i className="fas fa-file-code text-primary me-2"></i>
-                            <span>{file.filename}</span>
-                          </div>
-                          <span className="badge bg-secondary rounded-pill" style={{ fontSize: '10px' }}>
-                            {file.content.length} chars
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <button 
-                  className="btn btn-primary-premium w-100 mt-3" 
-                  onClick={generateDocumentation}
-                  disabled={generating || uploading || !currentProjectId || uploadedFiles.length === 0}
-                >
-                  {generating ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <i className="fas fa-magic me-1"></i> Generate Documentation
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Stats Card */}
-            <div className="card shadow-sm">
-              <div className="card-body py-3">
-                <div className="row text-center">
-                  <div className="col-4 border-end border-secondary">
-                    <h3 id="fileCount" className="fw-bold mb-0 text-primary">{uploadedFiles.length}</h3>
-                    <small class="text-secondary" style={{ fontSize: '11px' }}>Files</small>
-                  </div>
-                  <div className="col-4 border-end border-secondary">
-                    <h3 id="docCount" className="fw-bold mb-0 text-success">
-                      {(documents.api ? 1 : 0) + (documents.readme ? 1 : 0) + (diagramUrl ? 1 : 0)}
-                    </h3>
-                    <small class="text-secondary" style={{ fontSize: '11px' }}>Docs</small>
-                  </div>
-                  <div className="col-4">
-                    <h3 id="projectCount" className="fw-bold mb-0 text-info">{projects.length}</h3>
-                    <small class="text-secondary" style={{ fontSize: '11px' }}>Projects</small>
-                  </div>
-                </div>
-              </div>
+            <div className="project-selector-wrapper">
+              <select 
+                className="project-select form-select"
+                value={currentProjectId || ''} 
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === 'demo') {
+                    setCurrentProjectId('demo');
+                  } else {
+                    setCurrentProjectId(val ? Number(val) : null);
+                  }
+                }}
+              >
+                {!user && <option value="demo">Welcome & Demo Project</option>}
+                {user && (
+                  <>
+                    <option value="">-- Choose Project --</option>
+                    <option value="demo">Welcome & Demo Project</option>
+                    {projects.filter(p => p.id !== 'demo').map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </>
+                )}
+              </select>
             </div>
           </div>
 
-          {/* Main Content */}
-          <div className="col-lg-8 col-md-7">
-            {/* Active Project Panel */}
-            {currentProject && (
-              <div id="activeProjectPanel" className="card mb-3 p-3 shadow-sm">
-                <div className="d-flex justify-content-between align-items-center">
-                  <div>
-                    <span className="badge bg-secondary mb-1">Active Project</span>
-                    <h4 className="mb-1 fw-bold text-white">{currentProject.name}</h4>
-                    <p className="text-secondary mb-0 small">{currentProject.description || 'No description provided.'}</p>
-                  </div>
-                  <div>
-                    <button className="btn btn-sm btn-outline-danger" onClick={deleteCurrentProject}>
-                      <i className="fas fa-trash-alt me-1"></i> Delete
-                    </button>
-                  </div>
+          {currentProject && (
+            <div className="project-details-card mt-4">
+              <div className="d-flex justify-content-between align-items-start mb-2">
+                <h6 className="project-detail-name m-0 text-truncate">{currentProject.name}</h6>
+                {currentProjectId !== 'demo' && (
+                  <button onClick={deleteCurrentProject} className="btn-delete-project" title="Delete Project">
+                    <i className="fa-solid fa-trash-can"></i>
+                  </button>
+                )}
+              </div>
+              <p className="project-detail-desc text-muted mb-3">{currentProject.description}</p>
+              
+              <div className="project-stats text-muted">
+                <div className="d-flex justify-content-between py-1 border-bottom">
+                  <span>Files uploaded:</span>
+                  <span className="fw-bold">{uploadedFiles.length}</span>
+                </div>
+                <div className="d-flex justify-content-between py-1">
+                  <span>Generated docs:</span>
+                  <span className="fw-bold">
+                    {((documents.api ? 1 : 0) + (documents.readme ? 1 : 0) + (diagramUrl ? 1 : 0))}
+                  </span>
                 </div>
               </div>
-            )}
+            </div>
+          )}
+        </aside>
 
-            {/* Tabs & Content */}
-            <div className="card shadow-sm">
-              <div className="card-header p-0">
-                <ul className="nav nav-tabs" id="docTabs">
-                  <li className="nav-item">
-                    <button 
-                      className={`nav-link ${activeTab === 'api' ? 'active' : ''}`}
-                      onClick={() => setActiveTab('api')}
-                    >
-                      <i className="fas fa-code me-1"></i> API Docs
-                    </button>
-                  </li>
-                  <li className="nav-item">
-                    <button 
-                      className={`nav-link ${activeTab === 'readme' ? 'active' : ''}`}
-                      onClick={() => setActiveTab('readme')}
-                    >
-                      <i className="fab fa-readme me-1"></i> README
-                    </button>
-                  </li>
-                  <li className="nav-item">
-                    <button 
-                      className={`nav-link ${activeTab === 'diagram' ? 'active' : ''}`}
-                      onClick={() => setActiveTab('diagram')}
-                    >
-                      <i className="fas fa-project-diagram me-1"></i> Architecture
-                    </button>
-                  </li>
-                </ul>
+        {/* Content Panel */}
+        <main className="content-container flex-grow-1 p-4">
+          {!currentProjectId ? (
+            <div className="empty-state-card text-center d-flex flex-column align-items-center justify-content-center py-5">
+              <div className="empty-icon-container mb-3">
+                <i className="fa-solid fa-folder-open text-muted"></i>
               </div>
-              <div className="card-body">
-                <div className="tab-content">
-                  
-                  {/* API Tab */}
-                  {activeTab === 'api' && (
-                    <div className="tab-pane show active">
-                      <div 
-                        id="apiContent" 
-                        className="doc-content p-4"
-                        dangerouslySetInnerHTML={{
-                          __html: documents.api 
-                            ? marked.parse(documents.api) 
-                            : `<div class="text-muted text-center py-5">
-                                <i class="fas fa-book-open fa-3x mb-3 text-secondary"></i>
-                                <p>${currentProjectId ? 'No API documentation generated yet.' : 'No project selected. Choose or create a project from the sidebar to view or generate documentation.'}</p>
-                               </div>`
-                        }}
-                      />
-                      {documents.api && (
-                        <div id="apiActions" className="mt-3 text-end">
-                          <button className="btn btn-sm btn-outline-premium me-2" onClick={() => copyToClipboard('api')}>
-                            <i className="fas fa-copy me-1"></i> Copy MD
-                          </button>
-                          <button className="btn btn-sm btn-outline-premium me-2" onClick={() => exportDoc('api', 'markdown')}>
-                            <i className="fab fa-markdown me-1"></i> Export MD
-                          </button>
-                          <button className="btn btn-sm btn-outline-premium" onClick={() => exportDoc('api', 'pdf')}>
-                            <i className="fas fa-file-pdf me-1"></i> Export PDF
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
+              <h4>No Active Project Selected</h4>
+              <p className="text-muted max-w-sm mb-4">
+                Please select an existing project from the sidebar dropdown or create a new project to start uploading source files and generating technical documentation.
+              </p>
+              <button onClick={handleCreateProjectBtnClick} className="btn btn-primary">
+                <i className="fa-solid fa-plus me-2"></i>Create Project
+              </button>
+            </div>
+          ) : (
+            <div className="row g-4 h-100 align-items-stretch">
+              {/* Left Column: File Manager */}
+              <div className="col-12 col-xl-4 d-flex flex-column">
+                <div className="dashboard-card flex-grow-1 d-flex flex-column p-4">
+                  <h5 className="card-section-title mb-3">
+                    <i className="fa-solid fa-file-code me-2 text-primary"></i>Source Code Files
+                  </h5>
 
-                  {/* README Tab */}
-                  {activeTab === 'readme' && (
-                    <div className="tab-pane show active">
-                      <div 
-                        id="readmeContent" 
-                        className="doc-content p-4"
-                        dangerouslySetInnerHTML={{
-                          __html: documents.readme 
-                            ? marked.parse(documents.readme) 
-                            : `<div class="text-muted text-center py-5">
-                                <i class="fab fa-readme fa-3x mb-3 text-secondary"></i>
-                                <p>${currentProjectId ? 'No README generated yet.' : 'No project selected. Choose or create a project from the sidebar to view or generate documentation.'}</p>
-                               </div>`
-                        }}
-                      />
-                      {documents.readme && (
-                        <div id="readmeActions" className="mt-3 text-end">
-                          <button className="btn btn-sm btn-outline-premium me-2" onClick={() => copyToClipboard('readme')}>
-                            <i className="fas fa-copy me-1"></i> Copy MD
-                          </button>
-                          <button className="btn btn-sm btn-outline-premium me-2" onClick={() => exportDoc('readme', 'markdown')}>
-                            <i className="fab fa-markdown me-1"></i> Export MD
-                          </button>
-                          <button className="btn btn-sm btn-outline-premium" onClick={() => exportDoc('readme', 'pdf')}>
-                            <i className="fas fa-file-pdf me-1"></i> Export PDF
-                          </button>
-                        </div>
-                      )}
+                  {/* Drag and Drop Box */}
+                  <div 
+                    className={`dropzone-area text-center py-4 px-3 mb-3 d-flex flex-column align-items-center justify-content-center ${dragOver ? 'dragover' : ''}`}
+                    onDragOver={onDragOver}
+                    onDragLeave={onDragLeave}
+                    onDrop={onDrop}
+                    onClick={() => {
+                      if (!user) {
+                        triggerAuthPrompt('Please sign in to upload files.');
+                      } else if (currentProjectId === 'demo') {
+                        showToast('Files cannot be uploaded to the demo project. Please create a new project first!', 'warning');
+                      } else {
+                        fileInputRef.current.click();
+                      }
+                    }}
+                  >
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      onChange={(e) => handleFiles(e.target.files)} 
+                      multiple 
+                      className="d-none" 
+                    />
+                    <div className="dropzone-icon mb-2">
+                      <i className="fa-solid fa-cloud-arrow-up"></i>
                     </div>
-                  )}
+                    <span className="dropzone-text fw-semibold text-muted">
+                      {uploading ? 'Reading files...' : 'Drag & Drop files or click to browse'}
+                    </span>
+                    <span className="dropzone-subtext text-muted mt-1">.py, .js, .jsx, .ts, .tsx, .php</span>
+                  </div>
 
-                  {/* Diagram Tab */}
-                  {activeTab === 'diagram' && (
-                    <div className="tab-pane show active">
-                      <div id="diagramContent" className="doc-content p-4 d-flex align-items-center justify-content-center">
-                        <div className="text-center w-100">
-                          {diagramUrl ? (
-                            <img 
-                              id="architectureDiagram" 
-                              src={diagramUrl} 
-                              alt="Architecture Diagram" 
-                              style={{ maxWidth: '100%', borderRadius: '12px', display: 'block', margin: '0 auto' }} 
-                            />
-                          ) : (
-                            <div className="alert bg-dark text-secondary border border-secondary mb-0">
-                              <i className="fas fa-info-circle me-1"></i> 
-                              {currentProjectId ? 'Architecture diagram will appear here after generation' : 'No project selected'}
-                            </div>
-                          )}
-                        </div>
+                  {/* File List */}
+                  <div className="file-list-wrapper flex-grow-1">
+                    {uploadedFiles.length === 0 ? (
+                      <div className="no-files-placeholder text-center text-muted py-5">
+                        <i className="fa-solid fa-inbox d-block fs-3 mb-2"></i>
+                        <span>No files uploaded yet</span>
                       </div>
-                    </div>
-                  )}
+                    ) : (
+                      <div className="file-items-container">
+                        {uploadedFiles.map((file, idx) => {
+                          const ext = file.filename.split('.').pop();
+                          let iconClass = 'fa-file-lines';
+                          if (['js', 'jsx', 'ts', 'tsx'].includes(ext)) iconClass = 'fa-js text-warning';
+                          if (ext === 'py') iconClass = 'fa-python text-info';
+                          if (ext === 'php') iconClass = 'fa-php text-primary';
 
+                          return (
+                            <div key={idx} className="file-item-row d-flex align-items-center justify-content-between py-2 px-3 mb-2 border rounded">
+                              <div className="d-flex align-items-center text-truncate">
+                                <i className={`fa-solid ${iconClass} me-2.5`}></i>
+                                <span className="file-item-name text-truncate" title={file.filename}>{file.filename}</span>
+                              </div>
+                              <span className="file-item-size text-muted">{Math.round(file.content.length / 1024 * 10) / 10} KB</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: AI Generator & Markdown Display */}
+              <div className="col-12 col-xl-8 d-flex flex-column">
+                <div className="dashboard-card flex-grow-1 d-flex flex-column p-4">
+                  {/* Tabs & Generation buttons */}
+                  <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 border-bottom pb-3 mb-3">
+                    <div className="custom-tabs-container d-flex gap-2">
+                      <button 
+                        onClick={() => setActiveTab('api')} 
+                        className={`tab-btn ${activeTab === 'api' ? 'active' : ''}`}
+                      >
+                        <i className="fa-solid fa-code me-2"></i>API Docs
+                      </button>
+                      <button 
+                        onClick={() => setActiveTab('readme')} 
+                        className={`tab-btn ${activeTab === 'readme' ? 'active' : ''}`}
+                      >
+                        <i className="fa-solid fa-book-open me-2"></i>README.md
+                      </button>
+                      <button 
+                        onClick={() => setActiveTab('architecture')} 
+                        className={`tab-btn ${activeTab === 'architecture' ? 'active' : ''}`}
+                      >
+                        <i className="fa-solid fa-diagram-project me-2"></i>Architecture
+                      </button>
+                    </div>
+
+                    <div className="tab-actions d-flex gap-2">
+                      <button 
+                        onClick={generateDocumentation} 
+                        className="btn btn-primary"
+                        disabled={generating || uploadedFiles.length === 0}
+                      >
+                        {generating ? (
+                          <>
+                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            <i className="fa-solid fa-wand-magic-sparkles me-2"></i>AI Generate
+                          </>
+                        )}
+                      </button>
+
+                      {activeTab !== 'architecture' && documents[activeTab] && (
+                        <>
+                          <button onClick={copyToClipboard} className="btn btn-secondary" title="Copy Markdown">
+                            <i className="fa-solid fa-copy"></i>
+                          </button>
+                          <button onClick={() => exportDoc('markdown')} className="btn btn-secondary" title="Export Markdown">
+                            <i className="fa-solid fa-file-arrow-down"></i>
+                          </button>
+                          <button onClick={() => exportDoc('pdf')} className="btn btn-secondary" title="Export PDF">
+                            <i className="fa-solid fa-file-pdf"></i>
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Main Document Output Area */}
+                  <div className="document-output-wrapper flex-grow-1">
+                    {activeTab === 'architecture' ? (
+                      <div className="diagram-display-panel h-100 d-flex align-items-center justify-content-center border rounded p-3 bg-light-panel">
+                        {diagramUrl ? (
+                          <div className="diagram-image-container text-center">
+                            <img src={diagramUrl} alt="Architecture Diagram" className="img-fluid rounded border shadow-sm" />
+                            <a href={diagramUrl} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline-secondary mt-3">
+                              <i className="fa-solid fa-up-right-from-square me-2"></i>Open in New Tab
+                            </a>
+                          </div>
+                        ) : (
+                          <div className="no-docs-placeholder text-center text-muted py-5">
+                            <i className="fa-solid fa-network-wired d-block fs-3 mb-2"></i>
+                            <span>No diagram generated yet. Click "AI Generate" to render structure.</span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="markdown-render-panel h-100 border rounded p-4 overflow-auto bg-light-panel">
+                        {documents[activeTab] ? (
+                          <div 
+                            className="markdown-body" 
+                            dangerouslySetInnerHTML={{ __html: marked.parse(documents[activeTab]) }} 
+                          />
+                        ) : (
+                          <div className="no-docs-placeholder text-center text-muted py-5 d-flex flex-column align-items-center justify-content-center h-100">
+                            <i className="fa-solid fa-pen-nib d-block fs-3 mb-2"></i>
+                            <span>No documentation generated yet.</span>
+                            <span className="text-muted fs-7 mt-1">Upload code files and click "AI Generate" to begin.</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
+          )}
+        </main>
+      </div>
+
+      {/* Auth Modal overlay (Login / Register) */}
+      {showAuthModal && (
+        <div className="modal-backdrop-custom d-flex align-items-center justify-content-center">
+          <div className="modal-card auth-card">
+            <div className="modal-header-custom d-flex justify-content-between align-items-center pb-3 border-bottom mb-3">
+              <div className="auth-logo">
+                <i className="fa-solid fa-cubes-stacked me-2"></i>
+                <span>DocForge</span>
+              </div>
+              <button onClick={() => setShowAuthModal(false)} className="btn-modal-close" title="Close">
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            
+            <p className="auth-subtitle text-muted text-center mb-3">
+              {authMode === 'login' ? 'Log in to your account' : 'Register a new account'}
+            </p>
+
+            <form onSubmit={handleAuth} className="auth-form mt-2">
+              <div className="form-group mb-3">
+                <label htmlFor="username">Username</label>
+                <div className="input-group-custom">
+                  <i className="fa-solid fa-user"></i>
+                  <input
+                    type="text"
+                    id="username"
+                    value={authUsername}
+                    onChange={(e) => setAuthUsername(e.target.value)}
+                    placeholder="Enter username"
+                    autoComplete="off"
+                    disabled={authLoading}
+                  />
+                </div>
+              </div>
+
+              <div className="form-group mb-4">
+                <label htmlFor="password">Password</label>
+                <div className="input-group-custom">
+                  <i className="fa-solid fa-lock"></i>
+                  <input
+                    type="password"
+                    id="password"
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    placeholder="Enter password"
+                    disabled={authLoading}
+                  />
+                </div>
+              </div>
+
+              <button type="submit" className="btn btn-primary w-100 py-2.5 auth-submit-btn" disabled={authLoading}>
+                {authLoading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Processing...
+                  </>
+                ) : (
+                  authMode === 'login' ? 'Login' : 'Create Account'
+                )}
+              </button>
+            </form>
+
+            <div className="auth-footer text-center mt-4 border-top pt-3">
+              {authMode === 'login' ? (
+                <p className="m-0 fs-7">
+                  Don't have an account?{' '}
+                  <span onClick={() => { setAuthMode('signup'); }} className="auth-toggle-link">
+                    Sign Up
+                  </span>
+                </p>
+              ) : (
+                <p className="m-0 fs-7">
+                  Already have an account?{' '}
+                  <span onClick={() => { setAuthMode('login'); }} className="auth-toggle-link">
+                    Log In
+                  </span>
+                </p>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Create Project Modal Dialog */}
+      {showNewProjectModal && (
+        <div className="modal-backdrop-custom d-flex align-items-center justify-content-center">
+          <div className="modal-card">
+            <div className="modal-header-custom d-flex justify-content-between align-items-center pb-3 border-bottom mb-3">
+              <h5 className="modal-title m-0">Create New Project</h5>
+              <button onClick={() => setShowNewProjectModal(false)} className="btn-modal-close">
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            <form onSubmit={createProject}>
+              <div className="form-group mb-3">
+                <label htmlFor="projectName" className="form-label-custom">Project Name</label>
+                <input 
+                  type="text" 
+                  id="projectName" 
+                  className="form-control-custom"
+                  value={newProjectName} 
+                  onChange={(e) => setNewProjectName(e.target.value)} 
+                  placeholder="e.g. DocForge Web App"
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div className="form-group mb-4">
+                <label htmlFor="projectDesc" className="form-label-custom">Description (Optional)</label>
+                <textarea 
+                  id="projectDesc" 
+                  className="form-control-custom"
+                  value={newProjectDesc} 
+                  onChange={(e) => setNewProjectDesc(e.target.value)} 
+                  placeholder="What is this project about?"
+                  rows="3"
+                />
+              </div>
+
+              <div className="modal-actions-custom d-flex justify-content-end gap-2">
+                <button type="button" onClick={() => setShowNewProjectModal(false)} className="btn btn-secondary">
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Create Project
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
