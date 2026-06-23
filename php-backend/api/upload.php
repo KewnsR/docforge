@@ -1,4 +1,5 @@
 <?php
+// php-backend/api/upload.php
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
@@ -10,6 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once '../config/database.php';
+require_once '../models/Project.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -17,10 +19,41 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+// Extract authorized user ID
+function getAuthorizedUserId() {
+    $headers = apache_request_headers();
+    if (isset($headers['Authorization'])) {
+        return (int) trim($headers['Authorization']);
+    }
+    if (isset($headers['authorization'])) {
+        return (int) trim($headers['authorization']);
+    }
+    if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+        return (int) trim($_SERVER['HTTP_AUTHORIZATION']);
+    }
+    return null;
+}
+
+$userId = getAuthorizedUserId();
+if (!$userId) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Unauthorized. Please login first.']);
+    exit;
+}
+
 $projectId = $_POST['project_id'] ?? null;
 if (!$projectId) {
     http_response_code(400);
     echo json_encode(['error' => 'Missing project_id']);
+    exit;
+}
+
+// Verify project ownership
+$projectModel = new Project();
+$project = $projectModel->getById($projectId, $userId);
+if (!$project) {
+    http_response_code(403);
+    echo json_encode(['error' => 'Access denied to this project']);
     exit;
 }
 
@@ -37,7 +70,6 @@ $uploadedFilesList = [];
 
 if (isset($_FILES['files'])) {
     $files = $_FILES['files'];
-    // Check if it's a single or multiple files upload
     $fileNames = is_array($files['name']) ? $files['name'] : [$files['name']];
     $fileTmpNames = is_array($files['tmp_name']) ? $files['tmp_name'] : [$files['tmp_name']];
     $fileErrors = is_array($files['error']) ? $files['error'] : [$files['error']];

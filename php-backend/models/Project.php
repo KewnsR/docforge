@@ -1,4 +1,5 @@
 <?php
+// php-backend/models/Project.php
 require_once __DIR__ . '/../config/database.php';
 
 class Project {
@@ -10,12 +11,12 @@ class Project {
         $this->conn = $database->getConnection();
     }
     
-    public function getAll() {
+    public function getAll($userId) {
         if (!$this->conn) return [];
         try {
-            $query = "SELECT * FROM " . $this->table_name . " ORDER BY created_at DESC";
+            $query = "SELECT * FROM " . $this->table_name . " WHERE user_id = :user_id ORDER BY created_at DESC";
             $stmt = $this->conn->prepare($query);
-            $stmt->execute();
+            $stmt->execute([':user_id' => $userId]);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch(PDOException $e) {
             error_log("Database error in getAll: " . $e->getMessage());
@@ -23,12 +24,12 @@ class Project {
         }
     }
     
-    public function getById($id) {
+    public function getById($id, $userId) {
         if (!$this->conn) return null;
         try {
-            $query = "SELECT * FROM " . $this->table_name . " WHERE id = :id";
+            $query = "SELECT * FROM " . $this->table_name . " WHERE id = :id AND user_id = :user_id";
             $stmt = $this->conn->prepare($query);
-            $stmt->execute([':id' => $id]);
+            $stmt->execute([':id' => $id, ':user_id' => $userId]);
             return $stmt->fetch(PDO::FETCH_ASSOC);
         } catch(PDOException $e) {
             error_log("Database error in getById: " . $e->getMessage());
@@ -36,14 +37,15 @@ class Project {
         }
     }
     
-    public function create($data) {
+    public function create($data, $userId) {
         if (!$this->conn) return ['error' => 'Database connection failed'];
         try {
-            $query = "INSERT INTO " . $this->table_name . " (name, description) VALUES (:name, :description) RETURNING id";
+            $query = "INSERT INTO " . $this->table_name . " (name, description, user_id) VALUES (:name, :description, :user_id) RETURNING id";
             $stmt = $this->conn->prepare($query);
             $stmt->execute([
                 ':name' => $data['name'],
-                ':description' => $data['description'] ?? ''
+                ':description' => $data['description'] ?? '',
+                ':user_id' => $userId
             ]);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             return ['id' => $result['id'], 'message' => 'Project created successfully'];
@@ -53,12 +55,12 @@ class Project {
         }
     }
     
-    public function delete($id) {
+    public function delete($id, $userId) {
         if (!$this->conn) return ['error' => 'Database connection failed'];
         try {
-            $query = "DELETE FROM " . $this->table_name . " WHERE id = :id";
+            $query = "DELETE FROM " . $this->table_name . " WHERE id = :id AND user_id = :user_id";
             $stmt = $this->conn->prepare($query);
-            $stmt->execute([':id' => $id]);
+            $stmt->execute([':id' => $id, ':user_id' => $userId]);
             return ['message' => 'Project deleted successfully'];
         } catch(PDOException $e) {
             error_log("Database error in delete: " . $e->getMessage());
