@@ -1,23 +1,23 @@
-# DocForge - AI-Powered Documentation Generator
+# Dokari - AI-Powered Technical Documentation Companion
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
 [![OpenAI](https://img.shields.io/badge/OpenAI-Powered-green.svg)](https://openai.com/)
 
-DocForge is an intelligent, open-source documentation generator that uses artificial intelligence to automatically create comprehensive documentation, project README files, and visual architecture diagrams from your codebase.
+Dokari is an intelligent, open-source technical documentation companion that uses artificial intelligence to automatically create codebase references, explain system structures, and answer natural language questions about your project files.
 
 ---
 
 ## Features
 
-- AI-Powered Documentation: Generates high-quality technical content utilizing OpenAI models.
-- Auto API Documentation: Parses source files (Python, JavaScript, PHP) to generate complete API references.
+- Dokari AI Companion: Interactive code Q&A chatbot to ask questions about your uploaded project files in real-time.
+- Doc Health Analyzer: Calculates a coverage quality score (0-100) for your codebase and provides actionable AI-powered code-fix suggestions.
+- API Documentation: Parses source files (Python, JavaScript, PHP) to generate complete technical references.
 - README Generator: Analyzes project files to compose professional README markdown files.
-- Architecture Diagrams: Evaluates project structure to render structural diagrams.
-- Solid Design Interface: Clean slate layout with user controls, quick copy-to-clipboard, and exports.
-- Secure User Authentication: Multi-user support with custom project workspaces and credentials database isolation.
-- Export Formats: Expose documentation outputs as Markdown or download them as PDF files.
-- Containerized Setup: Deploys easily with Docker Compose for local development or hosting.
+- Architecture Diagrams: Evaluates project structure to render relationships and exports custom diagrams.
+- User Authentication: Secure login/signup system with project isolation for private cloud storage.
+- Multi-format Exports: Download generated documentation as Markdown files or export them directly as PDF documents.
+- Clean Solid UI: Slate flat dashboard with light and dark mode toggles, built without glassmorphism.
 
 ---
 
@@ -41,18 +41,33 @@ DocForge is an intelligent, open-source documentation generator that uses artifi
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/docforge.git
-   cd docforge
+   git clone https://github.com/yourusername/dokari.git
+   cd dokari
    ```
 
-2. Build and launch the application using Docker Compose:
+2. Configure environment variables. Create a `.env` file in the root directory:
+   ```env
+   OPENAI_API_KEY=your_openai_api_key_here
+   ```
+
+3. Build and launch the application using Docker Compose:
    ```bash
    docker-compose up -d --build
    ```
 
-3. Access the services in your browser:
+4. Access the services in your browser:
    - Frontend Application: http://localhost:3000
    - PHP Backend API: http://localhost:8080
    - Flask AI Service: http://localhost:5000
 
 ---
+
+## Usage
+
+1. Open http://localhost:3000. By default, Dokari runs in Guest Mode, preloading a read-only Welcome & Demo project.
+2. Sign in or register an account via the header buttons to unlock database-backed cloud workspaces.
+3. Click the "+" button in the Projects sidebar to create a project.
+4. Drag and drop your project files (.py, .js, .jsx, .php) into the file dropzone.
+5. Review your Documentation Health Score and apply AI suggestions.
+6. Use the AI Companion chatbot to query explanations of your code structure.
+7. Click "AI Generate" on API Docs, README, or Architecture tabs to create technical documentation.

@@ -1,4 +1,4 @@
-/* DocForge Premium Clean Style - Solid Color Theme (No Glassmorphism) */
+/* Dokari Premium Clean Style - Solid Color Theme (No Glassmorphism) */
 
 :root {
   --font-sans: 'Outfit', 'Inter', sans-serif;
@@ -794,4 +794,129 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   gap: 0.5rem;
 }
+
+/* AI Chatbot Viewport styling */
+.chat-viewport-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-messages-container {
+  background-color: var(--panel-bg);
+  padding: 1.5rem;
+}
+
+.chat-message-row {
+  display: flex;
+  width: 100%;
+}
+
+.chat-message-bubble {
+  max-width: 75%;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+}
+
+.bubble-user {
+  background-color: var(--primary);
+  color: #ffffff;
+  border-top-right-radius: 0;
+}
+
+.bubble-ai {
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-top-left-radius: 0;
+}
+
+.bubble-sender-name {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.8;
+}
+
+.bubble-user .bubble-sender-name {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.bubble-ai .bubble-sender-name {
+  color: var(--primary);
+}
+
+.bubble-text {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.chat-input-bar {
+  border-top: 1px solid var(--border-color);
+}
+
+.chat-input-bar input {
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+}
+.chat-input-bar input:focus {
+  border-color: var(--border-focus);
+  box-shadow: none;
+}
+
+/* Documentation Health Score & recommendations styling */
+.badge-health {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  padding: 0.25rem 0.625rem;
+  border-radius: 12px;
+  color: #ffffff;
+}
+
+.health-excellent {
+  background-color: var(--success);
+}
+
+.health-average {
+  background-color: var(--warning);
+}
+
+.health-poor {
+  background-color: var(--error);
+}
+
+.doc-suggestions-feed {
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.doc-suggestion-item {
+  border-color: var(--border-color) !important;
+}
+
+.btn-fix-issue {
+  background-color: var(--primary-light);
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.125rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-fix-issue:hover {
+  background-color: var(--primary);
+  color: #ffffff;
+}
+
 

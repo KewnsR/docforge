@@ -39,7 +39,7 @@ CREATE INDEX IF NOT EXISTS idx_file_project ON files(project_id);
 
 -- Insert welcome data
 INSERT INTO projects (name, description) 
-SELECT 'Welcome to DocForge', 'Your AI-powered documentation generator'
+SELECT 'Welcome to Dokari', 'Your AI-powered technical documentation companion'
 WHERE NOT EXISTS (
-    SELECT 1 FROM projects WHERE name = 'Welcome to DocForge'
+    SELECT 1 FROM projects WHERE name = 'Welcome to Dokari'
 );

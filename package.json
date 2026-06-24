@@ -1,7 +1,7 @@
 {
-  "name": "docforge",
+  "name": "dokari",
   "version": "1.0.0",
-  "description": "DocForge - AI-Powered Documentation Generator",
+  "description": "Dokari - AI-Powered Technical Documentation Companion",
   "scripts": {
     "start:frontend": "npm --prefix frontend run dev",
     "start:backend": "php -S localhost:8080 php-backend/router.php",

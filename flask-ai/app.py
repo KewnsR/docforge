@@ -72,11 +72,11 @@ def generate_readme():
     """Generate README.md content"""
     data = request.json
     project_info = data.get('project_info', {})
-    files_summary = data.get('files_summary', '')
+    files_content = data.get('files_content', [])
     
     try:
         logger.info(f"Generating README for project {project_info.get('name', 'Unknown')}")
-        readme = ai_processor.generate_readme(project_info, files_summary)
+        readme = ai_processor.generate_readme(project_info, files_content)
         return jsonify({
             'success': True,
             'readme': readme,
