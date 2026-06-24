@@ -12,7 +12,7 @@ class DiagramGenerator:
         os.makedirs(self.diagrams_dir, exist_ok=True)
         
     def create_architecture_diagram(self, code_structure: dict) -> str:
-        project_name = code_structure.get('project_name', 'DocForge Project')
+        project_name = code_structure.get('project_name', 'Dokari Project')
         files = code_structure.get('files', [])
         
         # Analyze files

@@ -29,7 +29,7 @@ class Database {
         
         $this->host = getenv('DB_HOST') ?: 'localhost';
         $this->port = getenv('DB_PORT') ?: '5432';
-        $this->db_name = getenv('DB_NAME') ?: 'docforge';
+        $this->db_name = getenv('DB_NAME') ?: 'dokari';
         $this->username = getenv('DB_USER') ?: 'postgres';
         $this->password = getenv('DB_PASSWORD') ?: 'postgres';
     }

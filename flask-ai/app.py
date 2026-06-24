@@ -1,6 +1,5 @@
 from flask import Flask, request, jsonify, send_file, send_from_directory
 from flask_cors import CORS
-import openai
 import os
 from ai_processor import AIProcessor
 from diagram_generator import DiagramGenerator
@@ -15,8 +14,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 CORS(app)
 
-# Initialize DocForge services
-openai.api_key = os.getenv('OPENAI_API_KEY')
+# Initialize Dokari services
 ai_processor = AIProcessor()
 diagram_generator = DiagramGenerator()
 file_parser = FileParser()
@@ -26,14 +24,16 @@ def index():
     """Root endpoint showing service status and endpoints"""
     return jsonify({
         'status': 'online',
-        'service': 'DocForge AI Service',
+        'service': 'Dokari AI Service',
         'version': '1.0.0',
-        'message': 'Welcome to the DocForge AI Service. API endpoints are operational.',
+        'message': 'Welcome to the Dokari AI Service. API endpoints are operational.',
         'endpoints': [
             {'path': '/health', 'methods': ['GET'], 'description': 'Health status check'},
             {'path': '/generate/api', 'methods': ['POST'], 'description': 'Generate API documentation'},
             {'path': '/generate/readme', 'methods': ['POST'], 'description': 'Generate README.md'},
             {'path': '/generate/diagram', 'methods': ['POST'], 'description': 'Generate architecture diagram'},
+            {'path': '/generate/chat', 'methods': ['POST'], 'description': 'Interactive code Q&A chat'},
+            {'path': '/generate/health', 'methods': ['POST'], 'description': 'Documentation health rating'},
             {'path': '/export', 'methods': ['POST'], 'description': 'Export markdown to PDF'}
         ]
     })
@@ -43,7 +43,7 @@ def health_check():
     """Health check endpoint"""
     return jsonify({
         'status': 'healthy',
-        'service': 'DocForge AI Service',
+        'service': 'Dokari AI Service',
         'version': '1.0.0'
     })
 
@@ -61,11 +61,11 @@ def generate_api_docs():
             'success': True,
             'documentation': api_docs,
             'format': 'markdown',
-            'service': 'DocForge'
+            'service': 'Dokari'
         })
     except Exception as e:
         logger.error(f"Error generating API docs: {str(e)}")
-        return jsonify({'error': str(e), 'service': 'DocForge'}), 500
+        return jsonify({'error': str(e), 'service': 'Dokari'}), 500
 
 @app.route('/generate/readme', methods=['POST'])
 def generate_readme():
@@ -81,11 +81,11 @@ def generate_readme():
             'success': True,
             'readme': readme,
             'format': 'markdown',
-            'service': 'DocForge'
+            'service': 'Dokari'
         })
     except Exception as e:
         logger.error(f"Error generating README: {str(e)}")
-        return jsonify({'error': str(e), 'service': 'DocForge'}), 500
+        return jsonify({'error': str(e), 'service': 'Dokari'}), 500
 
 @app.route('/generate/diagram', methods=['POST'])
 def generate_diagram():
@@ -100,11 +100,50 @@ def generate_diagram():
             'success': True,
             'diagram_url': f'http://localhost:5000/diagrams/{diagram_path}',
             'format': 'png',
-            'service': 'DocForge'
+            'service': 'Dokari'
         })
     except Exception as e:
         logger.error(f"Error generating diagram: {str(e)}")
-        return jsonify({'error': str(e), 'service': 'DocForge'}), 500
+        return jsonify({'error': str(e), 'service': 'Dokari'}), 500
+
+@app.route('/generate/chat', methods=['POST'])
+def generate_chat():
+    """Answer questions about the codebase"""
+    data = request.json
+    files_content = data.get('files_content', [])
+    question = data.get('question', '')
+    history = data.get('chat_history', [])
+    
+    try:
+        logger.info(f"Generating chat answer for question: {question[:50]}")
+        answer = ai_processor.generate_chat_answer(files_content, question, history)
+        return jsonify({
+            'success': True,
+            'answer': answer,
+            'service': 'Dokari'
+        })
+    except Exception as e:
+        logger.error(f"Error in chat endpoint: {str(e)}")
+        return jsonify({'error': str(e), 'service': 'Dokari'}), 500
+
+@app.route('/generate/health', methods=['POST'])
+def generate_health():
+    """Analyze documentation coverage and quality score"""
+    data = request.json
+    files_content = data.get('files_content', [])
+    
+    try:
+        logger.info("Analyzing documentation health")
+        health = ai_processor.analyze_doc_health(files_content)
+        return jsonify({
+            'success': True,
+            'score': health['score'],
+            'suggestions': health['suggestions'],
+            'service': 'Dokari'
+        })
+    except Exception as e:
+        logger.error(f"Error in health endpoint: {str(e)}")
+        return jsonify({'error': str(e), 'service': 'Dokari'}), 500
 
 @app.route('/diagrams/<path:filename>', methods=['GET'])
 def serve_diagram(filename):
@@ -123,25 +162,25 @@ def export_documentation():
             import pdfkit
             import tempfile
             temp_dir = tempfile.gettempdir()
-            pdf_path = os.path.join(temp_dir, f"docforge_{abs(hash(content))}.pdf")
+            pdf_path = os.path.join(temp_dir, f"dokari_{abs(hash(content))}.pdf")
             pdfkit.from_string(content, pdf_path)
             
             return send_file(
                 pdf_path,
                 mimetype='application/pdf',
                 as_attachment=True,
-                download_name='docforge_documentation.pdf'
+                download_name='dokari_documentation.pdf'
             )
         else:
             return jsonify({
                 'success': True,
                 'content': content,
                 'format': 'markdown',
-                'service': 'DocForge'
+                'service': 'Dokari'
             })
     except Exception as e:
         logger.error(f"Error exporting documentation: {str(e)}")
-        return jsonify({'error': str(e), 'service': 'DocForge'}), 500
+        return jsonify({'error': str(e), 'service': 'Dokari'}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)

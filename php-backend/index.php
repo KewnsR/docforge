@@ -4,7 +4,7 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 header("Content-Type: application/json");
-header("X-Powered-By: DocForge");
+header("X-Powered-By: Dokari");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
@@ -39,12 +39,12 @@ function getAuthorizedUserId() {
 if ($path === '' || $path === '/' || $path === '/api') {
     echo json_encode([
         'status' => 'online',
-        'service' => 'DocForge PHP Backend API',
+        'service' => 'Dokari PHP Backend API',
         'version' => '1.0.0',
-        'message' => 'DocForge API endpoints are active.'
+        'message' => 'Dokari API endpoints are active.'
     ]);
 } elseif ($path === '/api/health') {
-    echo json_encode(['status' => 'healthy', 'service' => 'DocForge API']);
+    echo json_encode(['status' => 'healthy', 'service' => 'Dokari API']);
 } elseif ($path === '/api/auth/signup') {
     if ($method === 'POST') {
         $data = json_decode(file_get_contents('php://input'), true);
@@ -154,7 +154,7 @@ if ($path === '' || $path === '/' || $path === '/api') {
         }
     } else {
         http_response_code(404);
-        echo json_encode(['error' => 'Endpoint not found', 'service' => 'DocForge', 'path' => $path]);
+        echo json_encode(['error' => 'Endpoint not found', 'service' => 'Dokari', 'path' => $path]);
     }
 }
 ?>
