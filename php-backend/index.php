@@ -22,7 +22,10 @@ $path = rtrim($path, '/');
 
 // Helper to extract authorized user ID from headers
 function getAuthorizedUserId() {
-    $headers = apache_request_headers();
+    $headers = [];
+    if (function_exists('apache_request_headers')) {
+        $headers = apache_request_headers();
+    }
     if (isset($headers['Authorization'])) {
         return (int) trim($headers['Authorization']);
     }
@@ -31,6 +34,9 @@ function getAuthorizedUserId() {
     }
     if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
         return (int) trim($_SERVER['HTTP_AUTHORIZATION']);
+    }
+    if (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+        return (int) trim($_SERVER['REDIRECT_HTTP_AUTHORIZATION']);
     }
     return null;
 }
@@ -152,6 +158,8 @@ if ($path === '' || $path === '/' || $path === '/api') {
             }
             echo json_encode($res);
         }
+    } elseif ($path === '/api/upload' || $path === '/api/upload.php') {
+        require_once __DIR__ . '/api/upload.php';
     } else {
         http_response_code(404);
         echo json_encode(['error' => 'Endpoint not found', 'service' => 'Dokari', 'path' => $path]);

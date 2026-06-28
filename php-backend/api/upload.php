@@ -10,8 +10,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
 
-require_once '../config/database.php';
-require_once '../models/Project.php';
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../models/Project.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -21,7 +21,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 // Extract authorized user ID
 function getAuthorizedUserId() {
-    $headers = apache_request_headers();
+    $headers = [];
+    if (function_exists('apache_request_headers')) {
+        $headers = apache_request_headers();
+    }
     if (isset($headers['Authorization'])) {
         return (int) trim($headers['Authorization']);
     }
@@ -30,6 +33,9 @@ function getAuthorizedUserId() {
     }
     if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
         return (int) trim($_SERVER['HTTP_AUTHORIZATION']);
+    }
+    if (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+        return (int) trim($_SERVER['REDIRECT_HTTP_AUTHORIZATION']);
     }
     return null;
 }
@@ -68,19 +74,36 @@ if (!$conn) {
 
 $uploadedFilesList = [];
 
+$files = null;
 if (isset($_FILES['files'])) {
     $files = $_FILES['files'];
+} else if (isset($_FILES['files[]'])) {
+    $files = $_FILES['files[]'];
+} else if (!empty($_FILES)) {
+    $files = reset($_FILES);
+}
+
+if ($files) {
     $fileNames = is_array($files['name']) ? $files['name'] : [$files['name']];
     $fileTmpNames = is_array($files['tmp_name']) ? $files['tmp_name'] : [$files['tmp_name']];
     $fileErrors = is_array($files['error']) ? $files['error'] : [$files['error']];
     
     $count = count($fileNames);
     
+    // Ensure uploads directory exists
+    $uploadDir = __DIR__ . '/../uploads/' . $projectId;
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0777, true);
+    }
+    
     for ($i = 0; $i < $count; $i++) {
         if ($fileErrors[$i] === UPLOAD_ERR_OK) {
             $filename = basename($fileNames[$i]);
             $filepath = 'uploads/' . $projectId . '/' . $filename;
             $content = file_get_contents($fileTmpNames[$i]);
+            
+            // Save physical file
+            file_put_contents($uploadDir . '/' . $filename, $content);
             
             // Check if file already exists in project, if so, update it
             $checkQuery = "SELECT id FROM files WHERE project_id = :project_id AND filename = :filename";
