@@ -1,6 +1,35 @@
 from flask import Flask, request, jsonify, send_file, send_from_directory
 from flask_cors import CORS
 import os
+import sys
+import google.generativeai as genai
+
+# Load .env file automatically on app launch
+possible_env_paths = [
+    os.path.join(os.path.dirname(__file__), '..', '.env'),
+    os.path.join(os.path.dirname(__file__), '.env'),
+    '.env'
+]
+for env_path in possible_env_paths:
+    if os.path.exists(env_path):
+        try:
+            with open(env_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#') and '=' in line:
+                        k, v = line.split('=', 1)
+                        k, v = k.strip(), v.strip().strip('"\'')
+                        os.environ[k] = v
+        except Exception:
+            pass
+        break
+
+api_key = os.getenv('GEMINI_API_KEY') or os.getenv('GOOGLE_API_KEY') or os.getenv('OPENAI_API_KEY')
+if api_key:
+    os.environ['GOOGLE_API_KEY'] = api_key
+    os.environ['GEMINI_API_KEY'] = api_key
+    genai.configure(api_key=api_key)
+
 from ai_processor import AIProcessor
 from diagram_generator import DiagramGenerator
 from utils.file_parser import FileParser

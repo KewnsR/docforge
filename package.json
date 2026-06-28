@@ -4,7 +4,7 @@
   "description": "Dokari - AI-Powered Technical Documentation Companion",
   "scripts": {
     "start:frontend": "npm --prefix frontend run dev",
-    "start:backend": "php -S localhost:8080 php-backend/router.php",
+    "start:backend": "php -S 0.0.0.0:8080 php-backend/router.php",
     "start:ai": "python flask-ai/app.py",
     "docker:up": "docker-compose up --build",
     "docker:down": "docker-compose down"

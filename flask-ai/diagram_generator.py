@@ -18,78 +18,68 @@ class DiagramGenerator:
         # Analyze files
         parsed_files = {}
         for f in files:
-            # files can be string names or dicts with content
             filename = f if isinstance(f, str) else f.get('filename', '')
             content = '' if isinstance(f, str) else f.get('content', '')
-            parsed_files[filename] = self.file_parser.parse_file(filename, content)
+            if filename:
+                parsed_files[filename] = self.file_parser.parse_file(filename, content)
             
-        # Design image size based on number of files
-        num_files = len(parsed_files)
-        width = 800
-        height = max(500, 150 + num_files * 130)
+        num_files = max(1, len(parsed_files))
+        width = 900
+        height = max(550, 160 + num_files * 140)
         
-        # Create image
-        img = Image.new('RGB', (width, height), color='#f9fafb')
+        # Create canvas (clean slate theme)
+        img = Image.new('RGB', (width, height), color='#0f172a')
         draw = ImageDraw.Draw(img)
         
-        # Draw Header
-        draw.rectangle([(0, 0), (width, 80)], fill='#4f46e5')
-        
-        # Draw Title (using fallback text if font is not found)
-        draw.text((20, 30), f"Architecture Diagram: {project_name}", fill='#ffffff')
+        # Draw Header Banner
+        draw.rectangle([(0, 0), (width, 85)], fill='#4f46e5')
+        draw.text((30, 28), f"Dokari Architecture Map — {project_name}", fill='#ffffff')
+        draw.text((30, 56), f"Extracted from {num_files} active source file(s)", fill='#cbd5e1')
         
         # Draw component blocks
         y_offset = 120
-        box_width = 320
-        box_height = 90
+        box_width = 360
+        box_height = 105
         
-        # Draw files and details
         file_positions = {}
         for filename, info in parsed_files.items():
-            # Draw box for file
             x_pos = 50
-            draw.rectangle([(x_pos - 2, y_offset - 2), (x_pos + box_width + 2, y_offset + box_height + 2)], 
-                           fill='#e0e7ff') # shadow/border
-            draw.rectangle([(x_pos, y_offset), (x_pos + box_width, y_offset + box_height)], 
-                           fill='#ffffff', outline='#4f46e5', width=2)
+            # Outer shadow & inner card
+            draw.rectangle([(x_pos - 2, y_offset - 2), (x_pos + box_width + 2, y_offset + box_height + 2)], fill='#334155')
+            draw.rectangle([(x_pos, y_offset), (x_pos + box_width, y_offset + box_height)], fill='#1e293b', outline='#6366f1', width=2)
             
-            # Draw file title
-            draw.text((x_pos + 15, y_offset + 10), f"File: {filename}", fill='#111827')
+            # File Title
+            draw.text((x_pos + 16, y_offset + 12), f"File: {filename}", fill='#f8fafc')
             
-            # Draw summary of contents
+            # File Breakdown
             summary = []
             if info['classes']:
-                summary.append(f"Classes: {', '.join(info['classes'][:2])}")
+                classes_str = ", ".join(info['classes'])
+                summary.append(f"Classes ({len(info['classes'])}): {classes_str[:45]}")
             if info['functions']:
-                summary.append(f"Funcs: {', '.join(info['functions'][:3])}")
+                funcs_str = ", ".join(info['functions'])
+                summary.append(f"Funcs ({len(info['functions'])}): {funcs_str[:50]}")
             
-            summary_text = "\n".join(summary) if summary else "Config / Static Asset / Text"
-            draw.text((x_pos + 15, y_offset + 32), summary_text, fill='#4b5563')
+            summary_text = "\n".join(summary) if summary else "Config / Script / Asset"
+            draw.text((x_pos + 16, y_offset + 38), summary_text, fill='#94a3b8')
             
             file_positions[filename] = (x_pos + box_width, y_offset + box_height / 2)
-            y_offset += 130
+            y_offset += 140
             
-        # Draw relationships (e.g. imports) on the right side
+        # Draw dependency links on the right side
         for filename, info in parsed_files.items():
             imports = info['imports']
-            if imports:
+            if imports and filename in file_positions:
                 x_start = file_positions[filename][0]
                 y_start = file_positions[filename][1]
                 
-                # Show imports
-                clean_imports = []
-                for imp in imports:
-                    # strip extensions/paths
-                    clean_name = imp.split('.')[0]
-                    clean_imports.append(clean_name)
-                    
-                rel_text = f"Dependencies: {', '.join(clean_imports[:3])}"
-                draw.text((x_start + 40, y_start - 8), rel_text, fill='#059669')
+                clean_imports = [imp.split('.')[0] for imp in imports]
+                rel_text = f"Dependencies: {', '.join(clean_imports[:4])}"
                 
-                # Draw connector line
-                draw.line([(x_start, y_start), (x_start + 30, y_start)], fill='#10b981', width=2)
-                # Draw arrow head
-                draw.polygon([(x_start + 26, y_start - 5), (x_start + 26, y_start + 5), (x_start + 32, y_start)], fill='#10b981')
+                # Connector lines & text
+                draw.line([(x_start, y_start), (x_start + 40, y_start)], fill='#10b981', width=2)
+                draw.polygon([(x_start + 34, y_start - 5), (x_start + 34, y_start + 5), (x_start + 42, y_start)], fill='#10b981')
+                draw.text((x_start + 50, y_start - 8), rel_text, fill='#34d399')
             
         # Save image
         filename = f"diagram_{uuid.uuid4().hex[:10]}.png"
