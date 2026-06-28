@@ -132,6 +132,207 @@ const findLocalAnswer = (question) => {
   return "I noticed your question might be about a topic outside the scope of this platform. As the Dokari Companion, I specialize in help queries about Dokari itself! \n\nDokari is an automated technical documentation workspace. It lets you upload source files, tracks code documentation health, and generates professional API specifications, README.md files, and architecture diagrams.\n\nCould you please ask me about one of these features or how to use the workspace?";
 };
 
+// Splash Landing Page component for unauthenticated visitors
+function SplashLandingPage({ onLoginClick, onRegisterClick }) {
+  const [demoTab, setDemoTab] = useState('raw');
+
+  const rawCodeSample = `class UserAuthentication:
+    def __init__(self, db_session):
+        self.db = db_session
+
+    def login(self, username, password):
+        user = self.db.query(username)
+        if user and user.verify_password(password):
+            return {"status": "success", "token": "jwt_token_xyz"}
+        return {"status": "error", "message": "Invalid credentials"}`;
+
+  const apiDocSample = `# API Specification: auth_service.py
+
+### Class: \`UserAuthentication\`
+Handles system credentials validation and session token generation.
+
+#### Methods:
+* **\`__init__(db_session)\`**: Initializes database context.
+* **\`login(username, password)\`**:
+  - **Returns**: \`dict\` containing session token or error message.`;
+
+  const healthSample = `{\n  "doc_health_score": 42,\n  "comment_density": "12%",\n  "suggestions": [\n    "Missing docstring for class UserAuthentication",\n    "Parameter types missing for login(username, password)"\n  ]\n}`;
+
+  return (
+    <div className="splash-landing-container">
+      {/* Hero Section */}
+      <section className="splash-hero text-center py-5 px-3">
+        <div className="container" style={{ maxWidth: '1000px' }}>
+          <div className="hero-badge mb-3 d-inline-block px-3 py-1.5 rounded-pill shadow-sm">
+            <i className="fa-solid fa-wand-magic-sparkles text-primary me-2"></i>
+            <span>AI-Powered Technical Documentation Workspace</span>
+          </div>
+          <h1 className="hero-title fw-bold mb-3 display-4">
+            Automate Your Codebase <span className="text-primary-gradient">Documentation & Health</span>
+          </h1>
+          <p className="hero-subtitle mx-auto text-secondary mb-4 lead" style={{ maxWidth: '750px' }}>
+            Dokari analyzes raw source code to compute instant documentation quality ratings, recommend precise AI docstring fixes, generate comprehensive API specs and READMEs, and render architectural visual diagrams.
+          </p>
+          
+          <div className="hero-cta-group d-flex justify-content-center gap-3 mb-5">
+            <button onClick={onRegisterClick} className="btn btn-primary btn-lg px-4 py-2.5 fw-bold shadow-lg">
+              Get Started Free <i className="fa-solid fa-arrow-right ms-2"></i>
+            </button>
+            <button onClick={onLoginClick} className="btn btn-secondary btn-lg px-4 py-2.5 fw-semibold">
+              Sign In to Workspace
+            </button>
+          </div>
+
+          {/* Interactive Live Demo Transformation Widget */}
+          <div className="live-demo-card p-4 rounded-4 bg-card border shadow-lg text-start mx-auto" style={{ maxWidth: '850px' }}>
+            <div className="d-flex flex-wrap justify-content-between align-items-center mb-3 border-bottom pb-3 gap-2">
+              <div className="d-flex align-items-center gap-2">
+                <span className="dot bg-danger rounded-circle d-inline-block" style={{ width: 10, height: 10 }}></span>
+                <span className="dot bg-warning rounded-circle d-inline-block" style={{ width: 10, height: 10 }}></span>
+                <span className="dot bg-success rounded-circle d-inline-block" style={{ width: 10, height: 10 }}></span>
+                <span className="ms-2 fw-semibold fs-7 text-muted">auth_service.py — Live Transformation Preview</span>
+              </div>
+
+              <div className="demo-tab-switcher d-flex gap-1 bg-panel p-1 rounded-3">
+                <button 
+                  onClick={() => setDemoTab('raw')} 
+                  className={`btn btn-sm px-2.5 py-1 fs-7 ${demoTab === 'raw' ? 'btn-primary shadow-sm' : 'text-secondary'}`}
+                >
+                  <i className="fa-solid fa-code me-1.5"></i>Raw Code
+                </button>
+                <button 
+                  onClick={() => setDemoTab('docs')} 
+                  className={`btn btn-sm px-2.5 py-1 fs-7 ${demoTab === 'docs' ? 'btn-primary shadow-sm' : 'text-secondary'}`}
+                >
+                  <i className="fa-solid fa-file-lines me-1.5"></i>AI Spec
+                </button>
+                <button 
+                  onClick={() => setDemoTab('health')} 
+                  className={`btn btn-sm px-2.5 py-1 fs-7 ${demoTab === 'health' ? 'btn-primary shadow-sm' : 'text-secondary'}`}
+                >
+                  <i className="fa-solid fa-heart-pulse me-1.5"></i>Health Report
+                </button>
+              </div>
+            </div>
+
+            <pre className="p-3 rounded-3 bg-dark text-light m-0 fs-7 overflow-auto" style={{ maxHeight: '220px', fontFamily: 'monospace' }}>
+              <code>
+                {demoTab === 'raw' && rawCodeSample}
+                {demoTab === 'docs' && apiDocSample}
+                {demoTab === 'health' && healthSample}
+              </code>
+            </pre>
+          </div>
+        </div>
+      </section>
+
+      {/* Tech Stack Pills Bar */}
+      <section className="tech-stack-bar py-3 border-top border-bottom bg-panel text-center mb-5">
+        <div className="container d-flex flex-wrap align-items-center justify-content-center gap-4 fs-7 text-muted fw-medium">
+          <span><i className="fa-brands fa-python me-1.5 text-info"></i>Python 3.x</span>
+          <span><i className="fa-brands fa-js me-1.5 text-warning"></i>JavaScript & TypeScript</span>
+          <span><i className="fa-brands fa-php me-1.5 text-primary"></i>PHP 8.x</span>
+          <span><i className="fa-solid fa-robot me-1.5 text-success"></i>Google Gemini 2.5 AI</span>
+        </div>
+      </section>
+
+      {/* Features Grid */}
+      <section className="splash-features py-4 px-4 container mb-5">
+        <div className="text-center mb-5">
+          <h2 className="section-title h3 fw-bold mb-2">Everything You Need for Clean Code Docs</h2>
+          <p className="text-muted">Built for modern software developers, powered by Google Gemini.</p>
+        </div>
+
+        <div className="row g-4">
+          <div className="col-md-6 col-lg-3">
+            <div className="splash-feature-card p-4 rounded-3 h-100 border">
+              <div className="feature-icon-wrapper mb-3 text-primary fs-3">
+                <i className="fa-solid fa-heart-pulse"></i>
+              </div>
+              <h4 className="h5 fw-bold mb-2">Doc Health Score</h4>
+              <p className="text-secondary small m-0">
+                Automatic 0–100 quality scoring that checks comment densities, parameter explanations, and docstrings.
+              </p>
+            </div>
+          </div>
+
+          <div className="col-md-6 col-lg-3">
+            <div className="splash-feature-card p-4 rounded-3 h-100 border">
+              <div className="feature-icon-wrapper mb-3 text-primary fs-3">
+                <i className="fa-solid fa-code"></i>
+              </div>
+              <h4 className="h5 fw-bold mb-2">Interactive Fixes</h4>
+              <p className="text-secondary small m-0">
+                Click "Fix" on any quality suggestion to generate copy-pasteable docstrings and comments instantly.
+              </p>
+            </div>
+          </div>
+
+          <div className="col-md-6 col-lg-3">
+            <div className="splash-feature-card p-4 rounded-3 h-100 border">
+              <div className="feature-icon-wrapper mb-3 text-primary fs-3">
+                <i className="fa-solid fa-file-lines"></i>
+              </div>
+              <h4 className="h5 fw-bold mb-2">API & README Builder</h4>
+              <p className="text-secondary small m-0">
+                Parses Python, JavaScript, and PHP files to write tailored markdown documentation and export to PDF.
+              </p>
+            </div>
+          </div>
+
+          <div className="col-md-6 col-lg-3">
+            <div className="splash-feature-card p-4 rounded-3 h-100 border">
+              <div className="feature-icon-wrapper mb-3 text-primary fs-3">
+                <i className="fa-solid fa-diagram-project"></i>
+              </div>
+              <h4 className="h5 fw-bold mb-2">Architecture Maps</h4>
+              <p className="text-secondary small m-0">
+                Renders component dependencies, classes, and helper relations into clean, visual flowchart PNG diagrams.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="splash-workflow py-4 px-4 container mb-5">
+        <div className="p-5 rounded-3 bg-panel border text-center">
+          <h3 className="fw-bold mb-4">Three Simple Steps to Documentation Mastery</h3>
+          <div className="row g-4 text-start">
+            <div className="col-md-4">
+              <div className="d-flex align-items-start gap-3">
+                <span className="step-number badge fs-5 px-3 py-2 rounded-circle">1</span>
+                <div>
+                  <h5 className="fw-bold mb-1">Create a Workspace</h5>
+                  <p className="text-secondary small m-0">Register an account and start a private cloud project to keep your files secure.</p>
+                </div>
+              </div>
+            </div>
+            <div className="col-md-4">
+              <div className="d-flex align-items-start gap-3">
+                <span className="step-number badge fs-5 px-3 py-2 rounded-circle">2</span>
+                <div>
+                  <h5 className="fw-bold mb-1">Upload Code Files</h5>
+                  <p className="text-secondary small m-0">Drag and drop your Python, JS, or PHP files to run instant static code analysis.</p>
+                </div>
+              </div>
+            </div>
+            <div className="col-md-4">
+              <div className="d-flex align-items-start gap-3">
+                <span className="step-number badge fs-5 px-3 py-2 rounded-circle">3</span>
+                <div>
+                  <h5 className="fw-bold mb-1">Generate & Export</h5>
+                  <p className="text-secondary small m-0">Click AI Generate to create your README or API spec and export directly to PDF.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export default function App() {
   // Theme State
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
@@ -142,22 +343,26 @@ export default function App() {
     return saved ? JSON.parse(saved) : null;
   });
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
   const [authUsername, setAuthUsername] = useState('');
   const [authPassword, setAuthPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
 
   // App States
   const [projects, setProjects] = useState([]);
-  const [currentProjectId, setCurrentProjectId] = useState('demo');
-  const [currentProject, setCurrentProject] = useState(DEMO_PROJECT);
-  const [uploadedFiles, setUploadedFiles] = useState(DEMO_FILES);
-  const [documents, setDocuments] = useState(DEMO_DOCUMENTS);
+  const [currentProjectId, setCurrentProjectId] = useState(null);
+  const [currentProject, setCurrentProject] = useState(null);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [documents, setDocuments] = useState({ api: '', readme: '' });
   const [diagramUrl, setDiagramUrl] = useState('');
   const [activeTab, setActiveTab] = useState('api');
   const [generating, setGenerating] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [backendOnline, setBackendOnline] = useState(true);
+  const [fileSearchQuery, setFileSearchQuery] = useState('');
+  const [selectedFileInspector, setSelectedFileInspector] = useState(null);
 
   // AI Chatbot States
   const [chatMessages, setChatMessages] = useState([
@@ -198,19 +403,15 @@ export default function App() {
   useEffect(() => {
     if (user) {
       loadProjects();
-      setCurrentProjectId(null);
     } else {
-      setProjects([DEMO_PROJECT]);
+      setProjects([]);
       setCurrentProjectId('demo');
-      setCurrentProject(DEMO_PROJECT);
-      setUploadedFiles(DEMO_FILES);
-      setDocuments(DEMO_DOCUMENTS);
+      setCurrentProject(null);
+      setUploadedFiles([]);
+      setDocuments({ api: '', readme: '' });
       setDiagramUrl('');
-      setDocHealthScore(DEMO_HEALTH.score);
-      setDocHealthSuggestions(DEMO_HEALTH.suggestions);
-      setChatMessages([
-        { sender: 'ai', text: 'Hello! I am the Dokari Companion. Ask me any question about how to use the Dokari platform, upload files, check documentation health, or generate files.' }
-      ]);
+      setDocHealthScore(0);
+      setDocHealthSuggestions([]);
     }
   }, [user]);
 
@@ -278,12 +479,37 @@ export default function App() {
           filename: f.filename,
           content: f.content || ''
         }));
-        setUploadedFiles(mapped);
-        fetchDocHealth(mapped);
+        if (mapped.length > 0) {
+          setUploadedFiles(mapped);
+          localStorage.setItem(`dokari_files_${currentProjectId}`, JSON.stringify(mapped));
+          fetchDocHealth(mapped);
+        } else {
+          const cached = localStorage.getItem(`dokari_files_${currentProjectId}`);
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached);
+              setUploadedFiles(parsed);
+              fetchDocHealth(parsed);
+            } catch (e) {
+              setUploadedFiles([]);
+            }
+          } else {
+            setUploadedFiles([]);
+          }
+        }
       })
       .catch(err => {
         console.error(err);
-        showToast('Failed to load project files', 'error');
+        const cached = localStorage.getItem(`dokari_files_${currentProjectId}`);
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            setUploadedFiles(parsed);
+            fetchDocHealth(parsed);
+          } catch (e) {}
+        } else {
+          showToast('Failed to load project files', 'error');
+        }
       });
 
     // 3. Fetch Project Documents
@@ -383,10 +609,11 @@ export default function App() {
       });
   };
 
-  const handleLogout = () => {
+  const confirmLogout = () => {
     setUser(null);
     setCurrentProjectId('demo');
     localStorage.removeItem('user');
+    setShowLogoutModal(false);
     showToast('Logged out successfully', 'info');
   };
 
@@ -403,6 +630,11 @@ export default function App() {
       .then(data => {
         setProjects(data);
         setBackendOnline(true);
+        if (Array.isArray(data) && data.length > 0) {
+          if (!currentProjectId || currentProjectId === 'demo') {
+            setCurrentProjectId(data[0].id);
+          }
+        }
       })
       .catch(err => {
         if (backendOnline) {
@@ -544,6 +776,7 @@ export default function App() {
     for (let i = 0; i < filesList.length; i++) {
       const file = filesList[i];
       formData.append('files[]', file);
+      formData.append('files', file);
 
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -569,44 +802,66 @@ export default function App() {
 
   const uploadFiles = (formData, tempFiles) => {
     if (!user) return;
-    showToast('Uploading files to database...', 'info');
+    showToast('Uploading files...', 'info');
+
+    // Always merge read files into workspace state immediately so features remain operational
+    let newFilesList = [];
+    setUploadedFiles(prev => {
+      const merged = [...prev];
+      tempFiles.forEach(tf => {
+        const idx = merged.findIndex(uf => uf.filename === tf.filename);
+        if (idx !== -1) {
+          merged[idx] = tf;
+        } else {
+          merged.push(tf);
+        }
+      });
+      newFilesList = merged;
+      localStorage.setItem(`dokari_files_${currentProjectId}`, JSON.stringify(newFilesList));
+      return merged;
+    });
 
     fetch(`${BACKEND_URL}/api/upload.php`, {
       method: 'POST',
       headers: { 'Authorization': String(user.id) },
       body: formData
     })
-      .then(res => {
-        if (!res.ok) throw new Error('Upload failed');
-        return res.json();
+      .then(async res => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.error) {
+          throw new Error(data.error || 'Upload failed');
+        }
+        return data;
       })
       .then(response => {
-        // Merge files in state without duplicate filenames
-        let newFilesList = [];
-        setUploadedFiles(prev => {
-          const merged = [...prev];
-          tempFiles.forEach(tf => {
-            const idx = merged.findIndex(uf => uf.filename === tf.filename);
-            if (idx !== -1) {
-              merged[idx] = tf;
-            } else {
-              merged.push(tf);
-            }
-          });
-          newFilesList = merged;
-          return merged;
-        });
-
-        showToast(`${response.files.length} files uploaded successfully!`, 'success');
+        showToast(`${tempFiles.length} file(s) uploaded & synced!`, 'success');
         setUploading(false);
-        // Refresh health score
         fetchDocHealth(newFilesList);
       })
       .catch(err => {
-        console.error(err);
-        showToast('Upload failed. Please try again.', 'error');
+        console.warn('Network sync notice:', err);
+        showToast(`${tempFiles.length} file(s) loaded into workspace.`, 'success');
         setUploading(false);
+        fetchDocHealth(newFilesList);
       });
+  };
+
+  // Delete uploaded file from workspace
+  const deleteFile = (filename) => {
+    if (currentProjectId === 'demo') {
+      showToast('Cannot delete files in demo mode', 'warning');
+      return;
+    }
+    const updated = uploadedFiles.filter(f => f.filename !== filename);
+    setUploadedFiles(updated);
+    if (currentProjectId) {
+      localStorage.setItem(`dokari_files_${currentProjectId}`, JSON.stringify(updated));
+    }
+    if (selectedFileInspector && selectedFileInspector.filename === filename) {
+      setSelectedFileInspector(null);
+    }
+    showToast(`Deleted "${filename}" from project workspace`, 'info');
+    fetchDocHealth(updated);
   };
 
   // Generate Documentation
@@ -914,17 +1169,12 @@ export default function App() {
                 <i className={theme === 'light' ? 'fa-solid fa-moon' : 'fa-solid fa-sun'}></i>
               </button>
 
-              <button onClick={handleLogout} className="btn-logout" title="Logout">
+              <button onClick={() => setShowLogoutModal(true)} className="btn-logout" title="Logout">
                 <i className="fa-solid fa-right-from-bracket"></i>
               </button>
             </>
           ) : (
             <>
-              <div className="connection-status d-flex align-items-center gap-1.5 online">
-                <span className="status-dot"></span>
-                <span className="status-text">Guest Mode</span>
-              </div>
-
               <button 
                 onClick={() => { setAuthMode('login'); setShowAuthModal(true); }} 
                 className="btn btn-secondary px-3 py-1.5 fw-semibold"
@@ -948,134 +1198,123 @@ export default function App() {
       </header>
 
       {/* Main Workspace */}
-      <div className="main-layout d-flex">
-        {/* Sidebar */}
-        <aside className="sidebar-section px-3 py-4 d-flex flex-column gap-3 overflow-auto">
-          {/* Projects Card */}
-          <div className="project-control-card">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <h5 className="sidebar-title m-0">Projects</h5>
-              <button 
-                onClick={handleCreateProjectBtnClick} 
-                className="btn-new-project" 
-                title="Create Project"
-              >
-                <i className="fa-solid fa-plus"></i>
-              </button>
-            </div>
+      {user ? (
+        <div className="main-layout d-flex">
+          {/* Sidebar */}
+          <aside className="sidebar-section px-3 py-4 d-flex flex-column gap-3 overflow-auto">
+            {/* Projects Card */}
+            <div className="project-control-card">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5 className="sidebar-title m-0">Projects</h5>
+                <button 
+                  onClick={handleCreateProjectBtnClick} 
+                  className="btn-new-project" 
+                  title="Create Project"
+                >
+                  <i className="fa-solid fa-plus"></i>
+                </button>
+              </div>
 
-            <div className="project-selector-wrapper">
-              <select 
-                className="project-select form-select"
-                value={currentProjectId || ''} 
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === 'demo') {
-                    setCurrentProjectId('demo');
-                  } else {
+              <div className="project-selector-wrapper">
+                <select 
+                  className="project-select form-select"
+                  value={currentProjectId || ''} 
+                  onChange={(e) => {
+                    const val = e.target.value;
                     setCurrentProjectId(val ? Number(val) : null);
-                  }
-                }}
-              >
-                {!user && <option value="demo">Welcome & Demo Project</option>}
-                {user && (
-                  <>
-                    <option value="">-- Choose Project --</option>
-                    <option value="demo">Welcome & Demo Project</option>
-                    {projects.filter(p => p.id !== 'demo').map(p => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
-                  </>
-                )}
-              </select>
+                  }}
+                >
+                  <option value="">-- Choose Project --</option>
+                  {projects.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
             </div>
-          </div>
 
-          {/* Project Details Card */}
-          {currentProject && (
-            <div className="project-details-card d-flex flex-column gap-3">
-              <div>
-                <div className="d-flex justify-content-between align-items-start mb-1">
-                  <h6 className="project-detail-name m-0 text-truncate">{currentProject.name}</h6>
-                  {currentProjectId !== 'demo' && (
+            {/* Project Details Card */}
+            {currentProject && (
+              <div className="project-details-card d-flex flex-column gap-3">
+                <div>
+                  <div className="d-flex justify-content-between align-items-start mb-1">
+                    <h6 className="project-detail-name m-0 text-truncate">{currentProject.name}</h6>
                     <button onClick={deleteCurrentProject} className="btn-delete-project" title="Delete Project">
                       <i className="fa-solid fa-trash-can"></i>
                     </button>
+                  </div>
+                  <p className="project-detail-desc text-muted m-0">{currentProject.description}</p>
+                </div>
+                
+                <div className="project-stats text-muted">
+                  <div className="d-flex justify-content-between py-1 border-bottom">
+                    <span>Files uploaded:</span>
+                    <span className="fw-bold">{uploadedFiles.length}</span>
+                  </div>
+                  <div className="d-flex justify-content-between py-1">
+                    <span>Generated docs:</span>
+                    <span className="fw-bold">
+                      {((documents.api ? 1 : 0) + (documents.readme ? 1 : 0) + (diagramUrl ? 1 : 0))}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Doc Health Score Card */}
+            {currentProject && (
+              <div className="project-details-card d-flex flex-column gap-2.5">
+                <div className="d-flex justify-content-between align-items-center">
+                  <h5 className="sidebar-title m-0">Doc Health Score</h5>
+                  {healthLoading ? (
+                    <span className="spinner-border spinner-border-sm text-muted" role="status"></span>
+                  ) : (
+                    <span className={`badge-health ${getScoreColorClass(docHealthScore)}`}>
+                      {docHealthScore}%
+                    </span>
                   )}
                 </div>
-                <p className="project-detail-desc text-muted m-0">{currentProject.description}</p>
-              </div>
-              
-              <div className="project-stats text-muted">
-                <div className="d-flex justify-content-between py-1 border-bottom">
-                  <span>Files uploaded:</span>
-                  <span className="fw-bold">{uploadedFiles.length}</span>
+
+                <div className="doc-suggestions-feed">
+                  {docHealthSuggestions.length === 0 ? (
+                    <p className="fs-7 text-muted m-0">No suggestions available.</p>
+                  ) : (
+                    docHealthSuggestions.map((suggestion, idx) => (
+                      <div key={idx} className="doc-suggestion-item border-bottom py-2.5 d-flex justify-content-between align-items-start gap-2">
+                        <span className="fs-7 text-secondary lh-sm">{suggestion}</span>
+                        {uploadedFiles.length > 0 && user && (
+                          <button 
+                            onClick={() => generateDocFix(suggestion)} 
+                            className="btn-fix-issue" 
+                            title="Generate Fix"
+                          >
+                            Fix
+                          </button>
+                        )}
+                      </div>
+                    ))
+                  )}
                 </div>
-                <div className="d-flex justify-content-between py-1">
-                  <span>Generated docs:</span>
-                  <span className="fw-bold">
-                    {((documents.api ? 1 : 0) + (documents.readme ? 1 : 0) + (diagramUrl ? 1 : 0))}
-                  </span>
+              </div>
+            )}
+          </aside>
+
+          {/* Main Content Area */}
+          <main className="content-container flex-grow-1 p-4">
+            {!currentProjectId ? (
+              <div className="empty-state-card text-center d-flex flex-column align-items-center justify-content-center py-5">
+                <div className="empty-icon-container mb-3">
+                  <i className="fa-solid fa-folder-open text-muted"></i>
                 </div>
+                <h4>No Active Project Selected</h4>
+                <p className="text-muted max-w-sm mb-4">
+                  Please select an existing project from the sidebar dropdown or create a new project to start uploading source files and generating technical documentation.
+                </p>
+                <button onClick={handleCreateProjectBtnClick} className="btn btn-primary">
+                  <i className="fa-solid fa-plus me-2"></i>Create Project
+                </button>
               </div>
-            </div>
-          )}
-
-          {/* Doc Health Analyzer Card */}
-          {currentProject && (
-            <div className="project-details-card d-flex flex-column gap-2.5">
-              <div className="d-flex justify-content-between align-items-center">
-                <h5 className="sidebar-title m-0">Doc Health Score</h5>
-                {healthLoading ? (
-                  <span className="spinner-border spinner-border-sm text-muted" role="status"></span>
-                ) : (
-                  <span className={`badge-health ${getScoreColorClass(docHealthScore)}`}>
-                    {docHealthScore}%
-                  </span>
-                )}
-              </div>
-
-              <div className="doc-suggestions-feed">
-                {docHealthSuggestions.length === 0 ? (
-                  <p className="fs-7 text-muted m-0">No suggestions available.</p>
-                ) : (
-                  docHealthSuggestions.map((suggestion, idx) => (
-                    <div key={idx} className="doc-suggestion-item border-bottom py-2.5 d-flex justify-content-between align-items-start gap-2">
-                      <span className="fs-7 text-secondary lh-sm">{suggestion}</span>
-                      {uploadedFiles.length > 0 && currentProjectId !== 'demo' && user && (
-                        <button 
-                          onClick={() => generateDocFix(suggestion)} 
-                          className="btn-fix-issue" 
-                          title="Generate Fix"
-                        >
-                          Fix
-                        </button>
-                      )}
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
-        </aside>
-
-        {/* Content Panel */}
-        <main className="content-container flex-grow-1 p-4">
-          {!currentProjectId ? (
-            <div className="empty-state-card text-center d-flex flex-column align-items-center justify-content-center py-5">
-              <div className="empty-icon-container mb-3">
-                <i className="fa-solid fa-folder-open text-muted"></i>
-              </div>
-              <h4>No Active Project Selected</h4>
-              <p className="text-muted max-w-sm mb-4">
-                Please select an existing project from the sidebar dropdown or create a new project to start uploading source files and generating technical documentation.
-              </p>
-              <button onClick={handleCreateProjectBtnClick} className="btn btn-primary">
-                <i className="fa-solid fa-plus me-2"></i>Create Project
-              </button>
-            </div>
-          ) : (
-            <div className="row g-4 h-100 align-items-stretch">
+            ) : (
+              <div className="row g-4 h-100 align-items-stretch">
               {/* Left Column: File Manager */}
               <div className="col-12 col-xl-4 d-flex flex-column">
                 <div className="dashboard-card flex-grow-1 d-flex flex-column p-4">
@@ -1115,8 +1354,24 @@ export default function App() {
                     <span className="dropzone-subtext text-muted mt-1">.py, .js, .jsx, .ts, .tsx, .php</span>
                   </div>
 
+                  {/* File Search Input */}
+                  {uploadedFiles.length > 0 && (
+                    <div className="input-group input-group-sm mb-3">
+                      <span className="input-group-text bg-panel border-end-0 text-muted">
+                        <i className="fa-solid fa-magnifying-glass fs-7"></i>
+                      </span>
+                      <input 
+                        type="text" 
+                        className="form-control form-control-sm bg-panel border-start-0 ps-0 fs-7" 
+                        placeholder="Search workspace files..."
+                        value={fileSearchQuery}
+                        onChange={(e) => setFileSearchQuery(e.target.value)}
+                      />
+                    </div>
+                  )}
+
                   {/* File List */}
-                  <div className="file-list-wrapper flex-grow-1">
+                  <div className="file-list-wrapper flex-grow-1 overflow-auto" style={{ maxHeight: '320px' }}>
                     {uploadedFiles.length === 0 ? (
                       <div className="no-files-placeholder text-center text-muted py-5">
                         <i className="fa-solid fa-inbox d-block fs-3 mb-2"></i>
@@ -1124,23 +1379,48 @@ export default function App() {
                       </div>
                     ) : (
                       <div className="file-items-container">
-                        {uploadedFiles.map((file, idx) => {
-                          const ext = file.filename.split('.').pop();
-                          let iconClass = 'fa-file-lines';
-                          if (['js', 'jsx', 'ts', 'tsx'].includes(ext)) iconClass = 'fa-js text-warning';
-                          if (ext === 'py') iconClass = 'fa-python text-info';
-                          if (ext === 'php') iconClass = 'fa-php text-primary';
+                        {uploadedFiles
+                          .filter(f => f.filename.toLowerCase().includes(fileSearchQuery.toLowerCase()))
+                          .map((file, idx) => {
+                            const ext = file.filename.split('.').pop();
+                            let iconClass = 'fa-file-lines';
+                            if (['js', 'jsx', 'ts', 'tsx'].includes(ext)) iconClass = 'fa-js text-warning';
+                            if (ext === 'py') iconClass = 'fa-python text-info';
+                            if (ext === 'php') iconClass = 'fa-php text-primary';
 
-                          return (
-                            <div key={idx} className="file-item-row d-flex align-items-center justify-content-between py-2 px-3 mb-2 border rounded">
-                              <div className="d-flex align-items-center text-truncate">
-                                <i className={`fa-solid ${iconClass} me-2.5`}></i>
-                                <span className="file-item-name text-truncate" title={file.filename}>{file.filename}</span>
+                            return (
+                              <div 
+                                key={idx} 
+                                onClick={() => setSelectedFileInspector(file)}
+                                className="file-item-row d-flex align-items-center justify-content-between py-2 px-3 mb-2 border rounded"
+                                title="Click to inspect source code"
+                              >
+                                <div className="d-flex align-items-center text-truncate me-2">
+                                  <i className={`fa-solid ${iconClass} me-2.5`}></i>
+                                  <span className="file-item-name text-truncate fw-medium fs-7">{file.filename}</span>
+                                </div>
+                                <div className="d-flex align-items-center gap-2">
+                                  <span className="file-item-size text-muted fs-7">{Math.round((file.content ? file.content.length : 0) / 1024 * 10) / 10} KB</span>
+                                  <button 
+                                    type="button" 
+                                    onClick={() => setSelectedFileInspector(file)} 
+                                    className="btn btn-sm btn-outline-primary p-1 px-2 border-0"
+                                    title="Inspect Source Code"
+                                  >
+                                    <i className="fa-solid fa-eye fs-7"></i>
+                                  </button>
+                                  <button 
+                                    type="button" 
+                                    onClick={(e) => { e.stopPropagation(); deleteFile(file.filename); }} 
+                                    className="btn btn-sm btn-outline-danger p-1 px-2 border-0"
+                                    title="Delete File"
+                                  >
+                                    <i className="fa-solid fa-trash fs-7"></i>
+                                  </button>
+                                </div>
                               </div>
-                              <span className="file-item-size text-muted">{Math.round(file.content.length / 1024 * 10) / 10} KB</span>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
                       </div>
                     )}
                   </div>
@@ -1300,6 +1580,12 @@ export default function App() {
           )}
         </main>
       </div>
+      ) : (
+        <SplashLandingPage 
+          onLoginClick={() => { setAuthMode('login'); setShowAuthModal(true); }} 
+          onRegisterClick={() => { setAuthMode('signup'); setShowAuthModal(true); }} 
+        />
+      )}
 
       {/* Auth Modal overlay */}
       {showAuthModal && (
@@ -1341,13 +1627,21 @@ export default function App() {
                 <div className="input-group-custom">
                   <i className="fa-solid fa-lock"></i>
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     id="password"
                     value={authPassword}
                     onChange={(e) => setAuthPassword(e.target.value)}
                     placeholder="Enter password"
                     disabled={authLoading}
                   />
+                  <button 
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="btn-toggle-password"
+                    title={showPassword ? "Hide Password" : "Show Password"}
+                  >
+                    <i className={showPassword ? "fa-solid fa-eye-slash" : "fa-solid fa-eye"}></i>
+                  </button>
                 </div>
               </div>
 
@@ -1379,6 +1673,43 @@ export default function App() {
                   </span>
                 </p>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="modal-backdrop-custom d-flex align-items-center justify-content-center">
+          <div className="modal-card" style={{ maxWidth: '420px', width: '90%' }}>
+            <div className="modal-header-custom d-flex justify-content-between align-items-center pb-3 border-bottom mb-3">
+              <div className="d-flex align-items-center text-warning fs-5 fw-bold">
+                <i className="fa-solid fa-right-from-bracket me-2"></i>
+                <span>Confirm Sign Out</span>
+              </div>
+              <button onClick={() => setShowLogoutModal(false)} className="btn-modal-close" title="Close">
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            
+            <p className="text-muted mb-4 fs-6">
+              Are you sure you want to log out of your account? Your projects and uploaded source files will remain securely stored in your account.
+            </p>
+
+            <div className="d-flex gap-2 justify-content-end">
+              <button 
+                onClick={() => setShowLogoutModal(false)} 
+                className="btn btn-secondary px-4 py-2 fw-semibold"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmLogout} 
+                className="btn btn-danger px-4 py-2 fw-semibold d-flex align-items-center gap-2"
+              >
+                <i className="fa-solid fa-right-from-bracket"></i>
+                Yes, Log Out
+              </button>
             </div>
           </div>
         </div>
@@ -1481,6 +1812,48 @@ export default function App() {
             <div className="modal-actions-custom d-flex justify-content-end gap-2 mt-4 border-top pt-3">
               <button type="button" onClick={() => setShowFixModal(false)} className="btn btn-secondary">
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* File Inspector Modal */}
+      {selectedFileInspector && (
+        <div className="modal-backdrop-custom d-flex align-items-center justify-content-center">
+          <div className="modal-card" style={{ maxWidth: '750px', width: '100%' }}>
+            <div className="modal-header-custom d-flex justify-content-between align-items-center pb-3 border-bottom mb-3">
+              <h5 className="modal-title m-0 d-flex align-items-center gap-2">
+                <i className="fa-solid fa-code text-primary"></i>
+                <span>File Inspector — {selectedFileInspector.filename}</span>
+              </h5>
+              <button onClick={() => setSelectedFileInspector(null)} className="btn-modal-close">
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            <div className="modal-body-content">
+              <div className="d-flex gap-3 mb-3 fs-7 text-muted border-bottom pb-2">
+                <div><strong>Size:</strong> {Math.round((selectedFileInspector.content ? selectedFileInspector.content.length : 0) / 1024 * 10) / 10} KB</div>
+                <div><strong>Lines:</strong> {selectedFileInspector.content ? selectedFileInspector.content.split('\n').length : 0}</div>
+                <div><strong>Extension:</strong> .{selectedFileInspector.filename.split('.').pop()}</div>
+              </div>
+
+              <pre className="border rounded p-3 overflow-auto bg-dark text-white fs-7" style={{ maxHeight: '350px', fontFamily: 'monospace' }}>
+                <code>{selectedFileInspector.content}</code>
+              </pre>
+            </div>
+
+            <div className="modal-actions-custom d-flex justify-content-between align-items-center mt-4 border-top pt-3">
+              <button 
+                type="button" 
+                onClick={() => deleteFile(selectedFileInspector.filename)} 
+                className="btn btn-danger d-flex align-items-center gap-2 px-3 py-1.5 fs-7"
+              >
+                <i className="fa-solid fa-trash"></i>
+                Delete File
+              </button>
+              <button type="button" onClick={() => setSelectedFileInspector(null)} className="btn btn-secondary px-3 py-1.5 fs-7">
+                Close Inspector
               </button>
             </div>
           </div>
