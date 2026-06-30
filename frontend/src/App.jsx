@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { marked } from 'marked';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Resolve Backend and AI service URLs dynamically
 const HOST_IP = window.location.hostname || 'localhost';
@@ -27,7 +28,21 @@ const DEMO_FILES = [
 const DEMO_DOCUMENTS = {
   api: `# API Documentation - Demo Project\n\nThis is a preview of the generated API documentation for the demo project.\n\n## Python module: \`main.py\`\n### Class: \`Calculator\`\nHelper class for basic arithmetic operations.\n\n#### Method: \`add(self, a, b)\`\n*   **Arguments:** \`a\` (number), \`b\` (number)\n*   **Returns:** Sum of the two parameters.\n\n#### Method: \`sqrt(self, x)\`\n*   **Arguments:** \`x\` (number)\n*   **Returns:** Square root of \`x\`.\n\n---\n\n## JavaScript module: \`api.js\`\n### Function: \`fetchWeather(city)\`\nFetches current weather information from the system endpoint.\n*   **Arguments:** \`city\` (string)\n*   **Returns:** Promise resolving to weather object.`,
   readme: `# Demo Project README\n\nWelcome to the Demo Project! This is a simple preview showing how Dokari structures your generated document.\n\n## Features\n- Mathematical utility classes in Python.\n- Weather API integration functions in ES6 JavaScript.\n\n## Setup Instructions\n1. Clone the repository.\n2. Install dependencies:\n   \`\`\`bash\n   npm install\n   pip install -r requirements.txt\n   \`\`\`\n3. Run test suites.`,
-  architecture: ''
+  architecture: `graph TD
+    subgraph Frontend ["React SPA Client"]
+        AppNode["App.jsx"] --> MainNode["main.jsx"]
+    end
+    subgraph AI_Service ["Python Flask AI"]
+        AppPy["app.py API"] --> AiProcessorPy["ai_processor.py"]
+    end
+    subgraph Backend ["PHP Web Service"]
+        IndexPhp["index.php Router"] --> DB[("Database Store")]
+    end
+    AppNode -->|JSON API| AppPy
+    AppNode -->|Auth / Storage| IndexPhp
+    style Frontend fill:#1e293b,stroke:#6366f1,stroke-width:2px,color:#ffffff
+    style AI_Service fill:#1e293b,stroke:#10b981,stroke-width:2px,color:#ffffff
+    style Backend fill:#1e293b,stroke:#f59e0b,stroke-width:2px,color:#ffffff`
 };
 
 const DEMO_HEALTH = {
@@ -158,33 +173,61 @@ Handles system credentials validation and session token generation.
 
   const healthSample = `{\n  "doc_health_score": 42,\n  "comment_density": "12%",\n  "suggestions": [\n    "Missing docstring for class UserAuthentication",\n    "Parameter types missing for login(username, password)"\n  ]\n}`;
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 24, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: 'spring',
+        stiffness: 100,
+        damping: 16
+      }
+    }
+  };
+
   return (
-    <div className="splash-landing-container">
+    <motion.div 
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="splash-landing-container"
+    >
       {/* Hero Section */}
       <section className="splash-hero text-center py-5 px-3">
         <div className="container" style={{ maxWidth: '1000px' }}>
-          <div className="hero-badge mb-3 d-inline-block px-3 py-1.5 rounded-pill shadow-sm">
+          <motion.div variants={itemVariants} className="hero-badge mb-3 d-inline-block px-3 py-1.5 rounded-pill shadow-sm">
             <i className="fa-solid fa-wand-magic-sparkles text-primary me-2"></i>
             <span>AI-Powered Technical Documentation Workspace</span>
-          </div>
-          <h1 className="hero-title fw-bold mb-3 display-4">
+          </motion.div>
+          <motion.h1 variants={itemVariants} className="hero-title fw-bold mb-3 display-4">
             Automate Your Codebase <span className="text-primary-gradient">Documentation & Health</span>
-          </h1>
-          <p className="hero-subtitle mx-auto text-secondary mb-4 lead" style={{ maxWidth: '750px' }}>
+          </motion.h1>
+          <motion.p variants={itemVariants} className="hero-subtitle mx-auto text-secondary mb-4 lead" style={{ maxWidth: '750px' }}>
             Dokari analyzes raw source code to compute instant documentation quality ratings, recommend precise AI docstring fixes, generate comprehensive API specs and READMEs, and render architectural visual diagrams.
-          </p>
+          </motion.p>
           
-          <div className="hero-cta-group d-flex justify-content-center gap-3 mb-5">
+          <motion.div variants={itemVariants} className="hero-cta-group d-flex justify-content-center gap-3 mb-5">
             <button onClick={onRegisterClick} className="btn btn-primary btn-lg px-4 py-2.5 fw-bold shadow-lg">
               Get Started Free <i className="fa-solid fa-arrow-right ms-2"></i>
             </button>
             <button onClick={onLoginClick} className="btn btn-secondary btn-lg px-4 py-2.5 fw-semibold">
               Sign In to Workspace
             </button>
-          </div>
+          </motion.div>
 
           {/* Interactive Live Demo Transformation Widget */}
-          <div className="live-demo-card p-4 rounded-4 bg-card border shadow-lg text-start mx-auto" style={{ maxWidth: '850px' }}>
+          <motion.div variants={itemVariants} className="live-demo-card p-4 rounded-4 bg-card border shadow-lg text-start mx-auto" style={{ maxWidth: '850px' }}>
             <div className="d-flex flex-wrap justify-content-between align-items-center mb-3 border-bottom pb-3 gap-2">
               <div className="d-flex align-items-center gap-2">
                 <span className="dot bg-danger rounded-circle d-inline-block" style={{ width: 10, height: 10 }}></span>
@@ -222,22 +265,22 @@ Handles system credentials validation and session token generation.
                 {demoTab === 'health' && healthSample}
               </code>
             </pre>
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Tech Stack Pills Bar */}
-      <section className="tech-stack-bar py-3 border-top border-bottom bg-panel text-center mb-5">
+      <motion.section variants={itemVariants} className="tech-stack-bar py-3 border-top border-bottom bg-panel text-center mb-5">
         <div className="container d-flex flex-wrap align-items-center justify-content-center gap-4 fs-7 text-muted fw-medium">
           <span><i className="fa-brands fa-python me-1.5 text-info"></i>Python 3.x</span>
           <span><i className="fa-brands fa-js me-1.5 text-warning"></i>JavaScript & TypeScript</span>
           <span><i className="fa-brands fa-php me-1.5 text-primary"></i>PHP 8.x</span>
           <span><i className="fa-solid fa-robot me-1.5 text-success"></i>Google Gemini 2.5 AI</span>
         </div>
-      </section>
+      </motion.section>
 
       {/* Features Grid */}
-      <section className="splash-features py-4 px-4 container mb-5">
+      <motion.section variants={itemVariants} className="splash-features py-4 px-4 container mb-5">
         <div className="text-center mb-5">
           <h2 className="section-title h3 fw-bold mb-2">Everything You Need for Clean Code Docs</h2>
           <p className="text-muted">Built for modern software developers, powered by Google Gemini.</p>
@@ -292,10 +335,10 @@ Handles system credentials validation and session token generation.
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* How It Works */}
-      <section className="splash-workflow py-4 px-4 container mb-5">
+      <motion.section variants={itemVariants} className="splash-workflow py-4 px-4 container mb-5">
         <div className="p-5 rounded-3 bg-panel border text-center">
           <h3 className="fw-bold mb-4">Three Simple Steps to Documentation Mastery</h3>
           <div className="row g-4 text-start">
@@ -328,8 +371,8 @@ Handles system credentials validation and session token generation.
             </div>
           </div>
         </div>
-      </section>
-    </div>
+      </motion.section>
+    </motion.div>
   );
 }
 
@@ -355,10 +398,11 @@ export default function App() {
   const [currentProjectId, setCurrentProjectId] = useState(null);
   const [currentProject, setCurrentProject] = useState(null);
   const [uploadedFiles, setUploadedFiles] = useState([]);
-  const [documents, setDocuments] = useState({ api: '', readme: '' });
+  const [documents, setDocuments] = useState({ api: '', readme: '', architecture: '' });
   const [diagramUrl, setDiagramUrl] = useState('');
   const [activeTab, setActiveTab] = useState('api');
   const [generating, setGenerating] = useState(false);
+  const [showChatWidget, setShowChatWidget] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [backendOnline, setBackendOnline] = useState(true);
   const [fileSearchQuery, setFileSearchQuery] = useState('');
@@ -521,27 +565,45 @@ export default function App() {
       .then(docs => {
         let apiContent = '';
         let readmeContent = '';
-        let diagram = '';
+        let architectureContent = '';
 
         docs.forEach(doc => {
           if (doc.type === 'api') apiContent = doc.content;
           if (doc.type === 'readme') readmeContent = doc.content;
-          if (doc.type === 'architecture') diagram = doc.content;
+          if (doc.type === 'architecture') architectureContent = doc.content;
         });
 
-        setDocuments({ api: apiContent, readme: readmeContent });
-        if (diagram) {
-          const mappedUrl = diagram.replace('localhost', HOST_IP);
-          setDiagramUrl(mappedUrl);
-        } else {
-          setDiagramUrl('');
-        }
+        setDocuments({ api: apiContent, readme: readmeContent, architecture: architectureContent });
       })
       .catch(err => {
         console.error(err);
         showToast('Failed to load project documents', 'error');
       });
   }, [currentProjectId, user]);
+
+  // Mermaid dynamic renderer hook
+  useEffect(() => {
+    if (activeTab === 'architecture' && documents.architecture && !documents.architecture.startsWith('IMAGE_URL:') && window.mermaid) {
+      try {
+        const container = document.getElementById('mermaid-container');
+        if (container) {
+          container.removeAttribute('data-processed');
+          container.innerHTML = `<pre class="mermaid" style="background: transparent; border: none; margin: 0; padding: 0;">${documents.architecture}</pre>`;
+          window.mermaid.initialize({
+            startOnLoad: false,
+            theme: theme === 'dark' ? 'dark' : 'default',
+            securityLevel: 'loose',
+            flowchart: { useMaxWidth: true, htmlLabels: true }
+          });
+          window.mermaid.run({
+            nodes: document.querySelectorAll('.mermaid'),
+          });
+        }
+      } catch (e) {
+        console.error("Mermaid error:", e);
+      }
+    }
+  }, [activeTab, documents.architecture, theme]);
 
   // Utility to show toasts
   const showToast = (message, type = 'info') => {
@@ -949,9 +1011,23 @@ export default function App() {
           return res.json();
         })
         .then(data => {
-          const url = data.diagram_url.replace('localhost', HOST_IP);
-          setDiagramUrl(url);
-          return saveDocToDB('architecture', url);
+          let finalCode = "";
+          if (data.mermaid_code) {
+            finalCode = data.mermaid_code;
+          } else if (data.diagram_url) {
+            const mappedUrl = data.diagram_url.replace('localhost', HOST_IP);
+            finalCode = `IMAGE_URL:${mappedUrl}`;
+          } else {
+            finalCode = `graph TD\n    ErrorNode[No valid diagram data returned from AI service]`;
+          }
+
+          setDocuments(prev => ({
+            ...prev,
+            architecture: finalCode
+          }));
+          showToast('Architecture Diagram generated successfully!', 'success');
+          setGenerating(false);
+          return saveDocToDB('architecture', finalCode);
         })
         .catch(err => {
           console.error(err);
@@ -1166,7 +1242,14 @@ export default function App() {
               </div>
 
               <button onClick={toggleTheme} className="theme-toggle-btn" aria-label="Toggle theme">
-                <i className={theme === 'light' ? 'fa-solid fa-moon' : 'fa-solid fa-sun'}></i>
+                <motion.div
+                  key={theme}
+                  initial={{ rotate: -180, scale: 0.6, opacity: 0 }}
+                  animate={{ rotate: 0, scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.25, ease: 'easeOut' }}
+                >
+                  <i className={theme === 'light' ? 'fa-solid fa-moon' : 'fa-solid fa-sun'}></i>
+                </motion.div>
               </button>
 
               <button onClick={() => setShowLogoutModal(true)} className="btn-logout" title="Logout">
@@ -1190,7 +1273,14 @@ export default function App() {
               </button>
 
               <button onClick={toggleTheme} className="theme-toggle-btn" aria-label="Toggle theme">
-                <i className={theme === 'light' ? 'fa-solid fa-moon' : 'fa-solid fa-sun'}></i>
+                <motion.div
+                  key={theme}
+                  initial={{ rotate: -180, scale: 0.6, opacity: 0 }}
+                  animate={{ rotate: 0, scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.25, ease: 'easeOut' }}
+                >
+                  <i className={theme === 'light' ? 'fa-solid fa-moon' : 'fa-solid fa-sun'}></i>
+                </motion.div>
               </button>
             </>
           )}
@@ -1262,16 +1352,41 @@ export default function App() {
 
             {/* Doc Health Score Card */}
             {currentProject && (
-              <div className="project-details-card d-flex flex-column gap-2.5">
-                <div className="d-flex justify-content-between align-items-center">
-                  <h5 className="sidebar-title m-0">Doc Health Score</h5>
-                  {healthLoading ? (
-                    <span className="spinner-border spinner-border-sm text-muted" role="status"></span>
-                  ) : (
-                    <span className={`badge-health ${getScoreColorClass(docHealthScore)}`}>
-                      {docHealthScore}%
+              <div className="project-details-card d-flex flex-column gap-3">
+                <div className="d-flex align-items-center gap-3">
+                  <div className="position-relative d-inline-flex">
+                    <svg className="health-ring-svg" width="60" height="60">
+                      <circle className="health-ring-bg" cx="30" cy="30" r="26" />
+                      <circle 
+                        className="health-ring-indicator" 
+                        cx="30" 
+                        cy="30" 
+                        r="26" 
+                        stroke={
+                          docHealthScore >= 80 ? 'var(--success)' : 
+                          docHealthScore >= 50 ? 'var(--warning)' : 
+                          'var(--error)'
+                        }
+                        strokeDasharray="163.3"
+                        strokeDashoffset={163.3 - (163.3 * docHealthScore) / 100}
+                      />
+                    </svg>
+                    <div className="position-absolute top-50 start-50 translate-middle fw-bold fs-7" style={{ transform: 'translate(-50%, -50%)', letterSpacing: '-0.02em' }}>
+                      {healthLoading ? (
+                        <span className="spinner-border spinner-border-sm text-primary" style={{ width: '12px', height: '12px', borderWidth: '2px' }} role="status"></span>
+                      ) : (
+                        `${docHealthScore}%`
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <h6 className="sidebar-title m-0">Documentation Health</h6>
+                    <span className="fs-7 text-muted fw-semibold">
+                      {docHealthScore >= 80 ? 'Excellent Coverage' : 
+                       docHealthScore >= 50 ? 'Needs Attention' : 
+                       'Critical Deficit'}
                     </span>
-                  )}
+                  </div>
                 </div>
 
                 <div className="doc-suggestions-feed">
@@ -1317,7 +1432,7 @@ export default function App() {
               <div className="row g-4 h-100 align-items-stretch">
               {/* Left Column: File Manager */}
               <div className="col-12 col-xl-4 d-flex flex-column">
-                <div className="dashboard-card flex-grow-1 d-flex flex-column p-4">
+                <div className="dashboard-card flex-grow-1 d-flex flex-column p-4 animate-delay-1">
                   <h5 className="card-section-title mb-3">
                     <i className="fa-solid fa-file-code me-2 text-primary"></i>Source Code Files
                   </h5>
@@ -1429,7 +1544,7 @@ export default function App() {
 
               {/* Right Column: AI Generator & Workspace Displays */}
               <div className="col-12 col-xl-8 d-flex flex-column">
-                <div className="dashboard-card flex-grow-1 d-flex flex-column p-4">
+                <div className="dashboard-card flex-grow-1 d-flex flex-column p-4 animate-delay-2">
                   {/* Tabs & Actions */}
                   <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 border-bottom pb-3 mb-3">
                     <div className="custom-tabs-container d-flex gap-2">
@@ -1451,35 +1566,27 @@ export default function App() {
                       >
                         <i className="fa-solid fa-diagram-project me-2"></i>Architecture
                       </button>
-                      <button 
-                        onClick={() => setActiveTab('chat')} 
-                        className={`tab-btn ${activeTab === 'chat' ? 'active' : ''}`}
-                      >
-                        <i className="fa-solid fa-comments me-2"></i>AI Companion
-                      </button>
                     </div>
 
                     <div className="tab-actions d-flex gap-2">
-                      {activeTab !== 'chat' && (
-                        <button 
-                          onClick={generateDocumentation} 
-                          className="btn btn-primary"
-                          disabled={generating || uploadedFiles.length === 0}
-                        >
-                          {generating ? (
-                            <>
-                              <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                              Generating...
-                            </>
-                          ) : (
-                            <>
-                              <i className="fa-solid fa-wand-magic-sparkles me-2"></i>AI Generate
-                            </>
-                          )}
-                        </button>
-                      )}
+                      <button 
+                        onClick={generateDocumentation} 
+                        className="btn btn-primary"
+                        disabled={generating || uploadedFiles.length === 0}
+                      >
+                        {generating ? (
+                          <>
+                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            <i className="fa-solid fa-wand-magic-sparkles me-2"></i>AI Generate
+                          </>
+                        )}
+                      </button>
 
-                      {activeTab !== 'architecture' && activeTab !== 'chat' && documents[activeTab] && (
+                      {activeTab !== 'architecture' && documents[activeTab] && (
                         <>
                           <button onClick={copyToClipboard} className="btn btn-secondary" title="Copy Markdown">
                             <i className="fa-solid fa-copy"></i>
@@ -1495,60 +1602,24 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Main Document / Chat Output Area */}
+                  {/* Main Document Output Area */}
                   <div className="document-output-wrapper flex-grow-1">
-                    {activeTab === 'chat' ? (
-                      /* Chatbot Panel */
-                      <div className="chat-viewport-panel border rounded d-flex flex-column h-100 bg-light-panel">
-                        <div className="chat-messages-container flex-grow-1 p-3 overflow-auto">
-                          {chatMessages.map((msg, idx) => (
-                            <div key={idx} className={`chat-message-row d-flex ${msg.sender === 'user' ? 'justify-content-end' : 'justify-content-start'} mb-3`}>
-                              <div className={`chat-message-bubble ${msg.sender === 'user' ? 'bubble-user' : 'bubble-ai'}`}>
-                                <div className="bubble-sender-name mb-1">
-                                  {msg.sender === 'user' ? 'You' : 'Dokari AI'}
-                                </div>
-                                <div className="bubble-text">{msg.text}</div>
-                              </div>
-                            </div>
-                          ))}
-                          {chatLoading && (
-                            <div className="chat-message-row d-flex justify-content-start mb-3">
-                              <div className="chat-message-bubble bubble-ai">
-                                <div className="bubble-sender-name mb-1">Dokari AI</div>
-                                <div className="d-flex align-items-center gap-2">
-                                  <span className="spinner-border spinner-border-sm text-primary" role="status"></span>
-                                  <span className="fs-7 text-muted">Reading codebase...</span>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                          <div ref={chatEndRef} />
-                        </div>
-
-                        <form onSubmit={sendChatMessage} className="chat-input-bar border-top p-3 d-flex gap-2 bg-light">
-                          <input 
-                            type="text" 
-                            className="form-control"
-                            value={chatInput} 
-                            onChange={(e) => setChatInput(e.target.value)} 
-                            placeholder={uploadedFiles.length === 0 ? "Upload code files to chat..." : "Ask AI about the code (e.g. 'What does main.py do?')..."}
-                            disabled={chatLoading || uploadedFiles.length === 0}
-                          />
-                          <button type="submit" className="btn btn-primary px-4" disabled={chatLoading || !chatInput.trim() || uploadedFiles.length === 0}>
-                            Send
-                          </button>
-                        </form>
-                      </div>
-                    ) : activeTab === 'architecture' ? (
+                    {activeTab === 'architecture' ? (
                       /* Diagram Panel */
-                      <div className="diagram-display-panel h-100 d-flex align-items-center justify-content-center border rounded p-3 bg-light-panel">
-                        {diagramUrl ? (
-                          <div className="diagram-image-container text-center">
-                            <img src={diagramUrl} alt="Architecture Diagram" className="img-fluid rounded border shadow-sm" />
-                            <a href={diagramUrl} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline-secondary mt-3">
-                              <i className="fa-solid fa-up-right-from-square me-2"></i>Open in New Tab
-                            </a>
-                          </div>
+                      <div className="diagram-display-panel h-100 d-flex flex-column align-items-center justify-content-center border rounded p-3 bg-light-panel overflow-auto">
+                        {documents.architecture ? (
+                          documents.architecture.startsWith('IMAGE_URL:') ? (
+                            <div className="diagram-image-container text-center">
+                              <img src={documents.architecture.substring(10)} alt="Architecture Diagram" className="img-fluid rounded border shadow-sm" style={{ maxHeight: '420px', objectFit: 'contain' }} />
+                              <div className="mt-3">
+                                <a href={documents.architecture.substring(10)} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline-secondary">
+                                  <i className="fa-solid fa-up-right-from-square me-2"></i>Open in New Tab
+                                </a>
+                              </div>
+                            </div>
+                          ) : (
+                            <div id="mermaid-container" className="w-100 h-100 d-flex align-items-center justify-content-center"></div>
+                          )
                         ) : (
                           <div className="no-docs-placeholder text-center text-muted py-5">
                             <i className="fa-solid fa-network-wired d-block fs-3 mb-2"></i>
@@ -1588,10 +1659,23 @@ export default function App() {
       )}
 
       {/* Auth Modal overlay */}
-      {showAuthModal && (
-        <div className="modal-backdrop-custom d-flex align-items-center justify-content-center">
-          <div className="modal-card auth-card">
-            <div className="modal-header-custom d-flex justify-content-between align-items-center pb-3 border-bottom mb-3">
+      <AnimatePresence>
+        {showAuthModal && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="modal-backdrop-custom d-flex align-items-center justify-content-center"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, y: 15 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 15 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+              className="modal-card auth-card"
+            >
+              <div className="modal-header-custom d-flex justify-content-between align-items-center pb-3 border-bottom mb-3">
               <div className="auth-logo">
                 <i className="fa-solid fa-cubes-stacked me-2"></i>
                 <span>Dokari</span>
@@ -1674,46 +1758,62 @@ export default function App() {
                 </p>
               )}
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
+    </AnimatePresence>
 
       {/* Logout Confirmation Modal */}
-      {showLogoutModal && (
-        <div className="modal-backdrop-custom d-flex align-items-center justify-content-center">
-          <div className="modal-card" style={{ maxWidth: '420px', width: '90%' }}>
-            <div className="modal-header-custom d-flex justify-content-between align-items-center pb-3 border-bottom mb-3">
-              <div className="d-flex align-items-center text-warning fs-5 fw-bold">
-                <i className="fa-solid fa-right-from-bracket me-2"></i>
-                <span>Confirm Sign Out</span>
+      <AnimatePresence>
+        {showLogoutModal && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="modal-backdrop-custom d-flex align-items-center justify-content-center"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, y: 15 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 15 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+              className="modal-card" 
+              style={{ maxWidth: '420px', width: '90%' }}
+            >
+              <div className="modal-header-custom d-flex justify-content-between align-items-center pb-3 border-bottom mb-3">
+                <div className="d-flex align-items-center text-warning fs-5 fw-bold">
+                  <i className="fa-solid fa-right-from-bracket me-2"></i>
+                  <span>Confirm Sign Out</span>
+                </div>
+                <button onClick={() => setShowLogoutModal(false)} className="btn-modal-close" title="Close">
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
               </div>
-              <button onClick={() => setShowLogoutModal(false)} className="btn-modal-close" title="Close">
-                <i className="fa-solid fa-xmark"></i>
-              </button>
-            </div>
-            
-            <p className="text-muted mb-4 fs-6">
-              Are you sure you want to log out of your account? Your projects and uploaded source files will remain securely stored in your account.
-            </p>
+              
+              <p className="text-muted mb-4 fs-6">
+                Are you sure you want to log out of your account? Your projects and uploaded source files will remain securely stored in your account.
+              </p>
 
-            <div className="d-flex gap-2 justify-content-end">
-              <button 
-                onClick={() => setShowLogoutModal(false)} 
-                className="btn btn-secondary px-4 py-2 fw-semibold"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={confirmLogout} 
-                className="btn btn-danger px-4 py-2 fw-semibold d-flex align-items-center gap-2"
-              >
-                <i className="fa-solid fa-right-from-bracket"></i>
-                Yes, Log Out
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+              <div className="d-flex gap-2 justify-content-end">
+                <button 
+                  onClick={() => setShowLogoutModal(false)} 
+                  className="btn btn-secondary px-4 py-2 fw-semibold"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={confirmLogout} 
+                  className="btn btn-danger px-4 py-2 fw-semibold d-flex align-items-center gap-2"
+                >
+                  <i className="fa-solid fa-right-from-bracket"></i>
+                  Yes, Log Out
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Create Project Modal */}
       {showNewProjectModal && (
@@ -1859,6 +1959,101 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* Floating Action Button (AI Chatbot) */}
+      <button 
+        type="button" 
+        onClick={() => setShowChatWidget(!showChatWidget)} 
+        className={`floating-chat-btn ${showChatWidget ? 'active' : ''}`}
+        title="Chat with AI Companion"
+      >
+        <motion.div
+          key={showChatWidget ? 'close' : 'sparkle'}
+          initial={{ rotate: -90, scale: 0.8 }}
+          animate={{ rotate: 0, scale: 1 }}
+          transition={{ duration: 0.2 }}
+        >
+          {showChatWidget ? (
+            <i className="fa-solid fa-xmark"></i>
+          ) : (
+            <div className="position-relative d-flex align-items-center justify-content-center" style={{ width: '28px', height: '28px' }}>
+              <i className="fa-solid fa-comments fs-4"></i>
+              <i className="fa-solid fa-sparkles text-warning position-absolute" style={{ fontSize: '0.65rem', top: '-4px', right: '-4px', textShadow: '0 0 6px var(--warning)' }}></i>
+            </div>
+          )}
+        </motion.div>
+      </button>
+
+      {/* Floating AI Chat Widget Drawer */}
+      <AnimatePresence>
+        {showChatWidget && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9, y: 50, x: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 50, x: 20 }}
+            transition={{ type: 'spring', damping: 20, stiffness: 260 }}
+            className="floating-chat-widget"
+          >
+            <div className="chat-widget-header d-flex justify-content-between align-items-center">
+              <div className="d-flex align-items-center gap-2 text-white">
+                <div className="position-relative d-flex align-items-center justify-content-center" style={{ width: '24px', height: '24px' }}>
+                  <i className="fa-solid fa-comment-dots fs-5 text-white"></i>
+                  <i className="fa-solid fa-sparkles text-warning position-absolute" style={{ fontSize: '0.5rem', top: '-3px', right: '-3px' }}></i>
+                </div>
+                <div>
+                  <h6 className="m-0 text-white">AI Companion</h6>
+                  <span className="text-white-50">Ask about your code</span>
+                </div>
+              </div>
+              <button onClick={() => setShowChatWidget(false)} className="btn-close-chat" title="Close chat">
+                <i className="fa-solid fa-minus"></i>
+              </button>
+            </div>
+
+            <div className="chat-widget-body">
+              <div className="chat-widget-messages">
+                {chatMessages.map((msg, idx) => (
+                  <div key={idx} className={`chat-message-row d-flex ${msg.sender === 'user' ? 'justify-content-end' : 'justify-content-start'}`}>
+                    <div className={`chat-message-bubble ${msg.sender === 'user' ? 'bubble-user' : 'bubble-ai'}`}>
+                      <div className="bubble-sender-name mb-1">
+                        {msg.sender === 'user' ? 'You' : 'Dokari AI'}
+                      </div>
+                      <div className="bubble-text">{msg.text}</div>
+                    </div>
+                  </div>
+                ))}
+                {chatLoading && (
+                  <div className="chat-message-row d-flex justify-content-start">
+                    <div className="chat-message-bubble bubble-ai">
+                      <div className="bubble-sender-name mb-1">Dokari AI</div>
+                      <div className="d-flex align-items-center gap-2">
+                        <span className="spinner-border spinner-border-sm text-primary" style={{ width: '10px', height: '10px' }} role="status"></span>
+                        <span className="fs-7 text-muted">Thinking...</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div ref={chatEndRef} />
+              </div>
+
+              <div className="chat-widget-input-area">
+                <form onSubmit={sendChatMessage}>
+                  <input 
+                    type="text" 
+                    value={chatInput} 
+                    onChange={(e) => setChatInput(e.target.value)} 
+                    placeholder={uploadedFiles.length === 0 ? "Upload code to chat..." : "Ask me anything..."}
+                    disabled={chatLoading || uploadedFiles.length === 0}
+                  />
+                  <button type="submit" className="btn-chat-send" disabled={chatLoading || !chatInput.trim() || uploadedFiles.length === 0}>
+                    <i className="fa-solid fa-paper-plane"></i>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
