@@ -124,11 +124,11 @@ def generate_diagram():
     
     try:
         logger.info("Generating architecture diagram")
-        diagram_path = diagram_generator.create_architecture_diagram(code_structure)
+        mermaid_code = ai_processor.generate_architecture_mermaid(code_structure)
         return jsonify({
             'success': True,
-            'diagram_url': f'http://localhost:5000/diagrams/{diagram_path}',
-            'format': 'png',
+            'mermaid_code': mermaid_code,
+            'format': 'mermaid',
             'service': 'Dokari'
         })
     except Exception as e:

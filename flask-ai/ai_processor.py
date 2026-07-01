@@ -265,3 +265,41 @@ Code files to analyze:
         """Get current timestamp for documentation"""
         from datetime import datetime
         return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    def generate_architecture_mermaid(self, codebase_structure: dict) -> str:
+        """Generates a highly accurate Mermaid.js architecture diagram representing the actual uploaded files"""
+        files = codebase_structure.get('files', [])
+        if not files:
+            return "graph TD\n    NoFiles[No uploaded files to map]"
+            
+        prompt = """Analyze the following source code files and generate a professional, accurate, and legit architectural design diagram in Mermaid.js flowchart syntax (e.g. `graph TD` or `graph LR`).
+        
+        CRITICAL REQUIREMENTS:
+        1. Model the actual architecture of the uploaded codebase. Group components into realistic layers (e.g. Frontend/UI components, Controllers/Routes, Service Layers/Logic, Database Models/Clients, external integrations).
+        2. Create nodes for each module/file and draw clean directional dependency/flow arrows (e.g. Controller --> Service) showing how data flows and which components import or use each other.
+        3. Do NOT wrap the mermaid code in any markdown fences (like ```mermaid or ```). Return ONLY the raw Mermaid diagram text starting directly with `graph TD` or `graph LR` or other valid Mermaid graph types.
+        4. Do not use icons, emojis, or external markdown assets.
+        5. VERY IMPORTANT: Node identifiers in Mermaid must NOT contain periods (.), dashes (-), or special characters (e.g. do not write 'main.py' as a node ID). Instead, use simple alphanumeric node IDs and define labels inside brackets, e.g. 'MainPy[main.py]' or 'utils_js[utils.js]'.
+        
+        Files to analyze:
+        """
+        
+        for file in files:
+            fname = file.get('name') or file.get('filename') or 'unnamed_file'
+            prompt += f"\n--- File: {fname} ---\n"
+            prompt += file.get('content', '')[:15000]
+            prompt += "\n"
+            
+        try:
+            response = self._generate_content_with_fallback(prompt)
+            content = response.text.strip()
+            # Clean up potential markdown fences if Gemini included them anyway
+            if content.startswith("```mermaid"):
+                content = content[10:]
+            elif content.startswith("```"):
+                content = content[3:]
+            if content.endswith("```"):
+                content = content[:-3]
+            return content.strip()
+        except Exception as e:
+            return f"graph TD\n    Error[Error generating architecture diagram: {str(e)}]"
