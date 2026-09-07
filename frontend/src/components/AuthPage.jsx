@@ -98,10 +98,6 @@ function AuthPage({
             >
               <i className="fa-solid fa-arrow-left"></i>Back to Home
             </button>
-            <div className="brand-logo-header d-flex align-items-center gap-2">
-              <i className="fa-solid fa-cubes-stacked text-primary fs-4"></i>
-              <span className="brand-name fs-5">Dokari</span>
-            </div>
           </div>
 
           <h2 className="fw-bold tracking-tight mb-1 h3">

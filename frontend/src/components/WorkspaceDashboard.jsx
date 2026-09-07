@@ -1,6 +1,7 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { marked } from 'marked';
+import ArchitectureFlow from './ArchitectureFlow.jsx';
 
 function WorkspaceDashboard({
   currentProjectId,
@@ -35,14 +36,17 @@ function WorkspaceDashboard({
   projects,
   setCurrentProjectId,
   triggerAuthPrompt,
-  architectureZoom,
-  updateArchitectureZoom,
-  resetArchitectureView,
-  handleArchitectureWheel,
-  handleArchitecturePointerDown,
-  handleArchitecturePointerMove,
-  stopArchitecturePointer,
 }) {
+  const missingDocumentTypes = ['api', 'readme', 'architecture'].filter(type => !documents[type]);
+  const activeDocumentMissing = !documents[activeTab];
+  const activeDocumentLabels = {
+    api: 'API Docs',
+    readme: 'README',
+    architecture: 'Architecture',
+  };
+  const generationLabel = missingDocumentTypes.length === 0 ? 'Generate Again' : 'Generate Missing';
+  const activeGenerationLabel = activeDocumentMissing ? 'Generate' : 'Regenerate';
+
   return (
     // Main Workspace
       (
@@ -187,7 +191,7 @@ function WorkspaceDashboard({
           </aside>
 
           {/* Main Content Area */}
-          <main className="content-container grow p-4">
+          <main className="content-container grow px-3 pt-2 pb-4">
             <AnimatePresence mode="wait">
               {!currentProjectId ? (
                 <motion.div
@@ -216,11 +220,11 @@ function WorkspaceDashboard({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -15 }}
                   transition={{ duration: 0.3 }}
-                  className="row g-4 h-100 align-items-stretch w-100 m-0"
+                  className="row g-4 h-100 align-items-stretch"
                 >
               {/* Left Column: File Manager */}
-              <div className="col-12 col-xl-4 d-flex flex-column">
-                <div className="dashboard-card grow d-flex flex-column p-4 animate-delay-1">
+              <div className="col-12 col-xl-3 d-flex flex-column">
+                <div className="dashboard-card grow d-flex flex-column p-3 animate-delay-1">
                   <h5 className="card-section-title mb-3">
                     <i className="fa-solid fa-file-code me-2 text-primary"></i>Source Code Files
                   </h5>
@@ -337,8 +341,8 @@ function WorkspaceDashboard({
               </div>
 
               {/* Right Column: AI Generator & Workspace Displays */}
-              <div className="col-12 col-xl-8 d-flex flex-column">
-                <div className="dashboard-card grow d-flex flex-column p-4 animate-delay-2">
+              <div className="col-12 col-xl-9 d-flex flex-column">
+                <div className="dashboard-card grow d-flex flex-column p-3 animate-delay-2">
                   {/* Tabs & Actions */}
                   <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 border-bottom pb-3 mb-3">
                     <div className="custom-tabs-container d-flex gap-2">
@@ -363,22 +367,35 @@ function WorkspaceDashboard({
                     </div>
 
                     <div className="tab-actions d-flex gap-2">
-                      <button 
-                        onClick={generateDocumentation} 
-                        className="btn btn-primary"
-                        disabled={generating || uploadedFiles.length === 0}
-                      >
-                        {generating ? (
-                          <>
-                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                            Generating...
-                          </>
-                        ) : (
-                          <>
-                            <i className="fa-solid fa-wand-magic-sparkles me-2"></i>Generate All
-                          </>
-                        )}
-                      </button>
+                      {uploadedFiles.length > 0 && (
+                        <button 
+                          onClick={() => generateDocumentation(missingDocumentTypes.length === 0 ? 'all' : null)}
+                          className="btn btn-primary"
+                          disabled={generating}
+                        >
+                          {generating ? (
+                            <>
+                              <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                              Generating...
+                            </>
+                          ) : (
+                            <>
+                              <i className="fa-solid fa-wand-magic-sparkles me-2"></i>{generationLabel}
+                            </>
+                          )}
+                        </button>
+                      )}
+
+                      {uploadedFiles.length > 0 && (
+                        <button
+                          onClick={() => generateDocumentation(activeTab)}
+                          className="btn btn-secondary"
+                          disabled={generating || uploadedFiles.length === 0}
+                        >
+                          <i className="fa-solid fa-file-circle-plus me-2"></i>
+                          {activeGenerationLabel} {activeDocumentLabels[activeTab]}
+                        </button>
+                      )}
 
                       {activeTab !== 'architecture' && documents[activeTab] && (
                         <>
@@ -420,30 +437,7 @@ function WorkspaceDashboard({
                                 </div>
                               </div>
                             ) : (
-                              <div
-                                className="architecture-diagram-viewport w-100 h-100"
-                                onWheel={handleArchitectureWheel}
-                                onPointerDown={handleArchitecturePointerDown}
-                                onPointerMove={handleArchitecturePointerMove}
-                                onPointerUp={stopArchitecturePointer}
-                                onPointerCancel={stopArchitecturePointer}
-                                onPointerLeave={stopArchitecturePointer}
-                                style={{ touchAction: 'none', cursor: 'grab' }}
-                              >
-                                <div className="architecture-diagram-controls" role="toolbar" aria-label="Architecture diagram controls" onPointerDown={event => event.stopPropagation()}>
-                                  <button type="button" onClick={() => updateArchitectureZoom(0.1)} title="Zoom in" aria-label="Zoom in">
-                                    <i className="fa-solid fa-plus"></i>
-                                  </button>
-                                  <span aria-live="polite">{Math.round(architectureZoom * 100)}%</span>
-                                  <button type="button" onClick={() => updateArchitectureZoom(-0.1)} title="Zoom out" aria-label="Zoom out">
-                                    <i className="fa-solid fa-minus"></i>
-                                  </button>
-                                  <button type="button" onClick={resetArchitectureView} title="Reset view" aria-label="Reset view">
-                                    <i className="fa-solid fa-rotate-left"></i>
-                                  </button>
-                                </div>
-                                <div id="mermaid-container" className="w-100 h-100 d-flex align-items-center justify-content-center"></div>
-                              </div>
+                              <ArchitectureFlow content={documents.architecture} />
                             )
                           ) : (
                             <div className="no-docs-placeholder text-center text-muted py-5">

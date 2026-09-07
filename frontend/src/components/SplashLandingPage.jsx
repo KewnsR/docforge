@@ -242,21 +242,21 @@ function SplashLandingPage({ onLoginClick, onRegisterClick, onGetStarted }) {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -8 }}
                     transition={{ duration: 0.22 }}
-                    className="d-flex flex-column gap-3 p-3 bg-panel rounded-3 text-start"
+                    className="health-report-panel d-flex flex-column p-3 bg-panel rounded-3 text-start"
                   >
-                    <div className="d-flex flex-column gap-2.5">
+                    <div className="health-metric-list">
                       {healthMetrics.map((m, idx) => (
                         <div key={idx} className="metric-row">
-                          <div className="d-flex justify-content-between align-items-center mb-1 fs-7" style={{ fontFamily: 'var(--font-mono)' }}>
-                            <span className="fw-semibold text-secondary">{m.label}</span>
-                            <span className="fw-bold" style={{ color: m.color }}>{m.value}%</span>
+                          <div className="health-metric-header d-flex justify-content-between align-items-center" style={{ fontFamily: 'var(--font-mono)' }}>
+                            <span className="health-metric-label fw-semibold text-secondary">{m.label}</span>
+                            <span className="health-metric-value fw-bold" style={{ color: m.color }}>{m.value}%</span>
                           </div>
-                          <div className="progress-bar-bg rounded-pill" style={{ height: '8px', background: 'rgba(255,255,255,0.04)', overflow: 'hidden' }}>
+                          <div className="progress-bar-bg health-progress-track rounded-pill">
                             <motion.div 
                               initial={{ width: 0 }}
                               animate={{ width: `${m.value}%` }}
                               transition={{ duration: 0.8, ease: "easeOut" }}
-                              className="progress-bar-fill h-100 rounded-pill"
+                              className="progress-bar-fill health-progress-fill h-100 rounded-pill"
                               style={{ backgroundColor: m.color }}
                             />
                           </div>

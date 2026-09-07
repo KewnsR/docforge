@@ -36,14 +36,14 @@ const DEMO_DOCUMENTS = {
   api: `# API Documentation - Demo Project\n\nThis is a preview of the generated API documentation for the demo project.\n\n## Python module: \`main.py\`\n### Class: \`Calculator\`\nHelper class for basic arithmetic operations.\n\n#### Method: \`add(self, a, b)\`\n*   **Arguments:** \`a\` (number), \`b\` (number)\n*   **Returns:** Sum of the two parameters.\n\n#### Method: \`sqrt(self, x)\`\n*   **Arguments:** \`x\` (number)\n*   **Returns:** Square root of \`x\`.\n\n---\n\n## JavaScript module: \`api.js\`\n### Function: \`fetchWeather(city)\`\nFetches current weather information from the system endpoint.\n*   **Arguments:** \`city\` (string)\n*   **Returns:** Promise resolving to weather object.`,
   readme: `# Demo Project README\n\nWelcome to the Demo Project! This is a simple preview showing how Dokari structures your generated document.\n\n## Features\n- Mathematical utility classes in Python.\n- Weather API integration functions in ES6 JavaScript.\n\n## Setup Instructions\n1. Clone the repository.\n2. Install dependencies:\n   \`\`\`bash\n   npm install\n   pip install -r requirements.txt\n   \`\`\`\n3. Run test suites.`,
   architecture: `graph TD
-    subgraph Frontend ["React SPA Client"]
+    subgraph Frontend["React SPA Client"]
         AppNode["App.jsx"] --> MainNode["main.jsx"]
     end
-    subgraph AI_Service ["Python Flask AI"]
+    subgraph AI_Service["Python Flask AI"]
         AppPy["app.py API"] --> AiProcessorPy["ai_processor.py"]
     end
-    subgraph Backend ["PHP Web Service"]
-        IndexPhp["index.php Router"] --> DB[("Database Store")]
+    subgraph Backend["PHP Web Service"]
+        IndexPhp["index.php Router"] --> DB[(Database Store)]
     end
     AppNode -->|JSON API| AppPy
     AppNode -->|Auth / Storage| IndexPhp
@@ -197,9 +197,7 @@ function DecryptedText({ text, interval = 25, delay = 0, hoverTrigger = false })
   }, [text]);
 
   const handleMouseEnter = () => {
-    if (hoverTrigger) {
-      runAnimation();
-    }
+    if (hoverTrigger) runAnimation();
   };
 
   return (
@@ -209,33 +207,22 @@ function DecryptedText({ text, interval = 25, delay = 0, hoverTrigger = false })
   );
 }
 
-
-
 export default function App() {
-  // Theme State
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
   const [scrolled, setScrolled] = useState(false);
-
-  // View Router State ('landing' | 'dashboard' | 'auth')
   const [currentView, setCurrentView] = useState(() => {
     const saved = localStorage.getItem('user') || sessionStorage.getItem('user');
-    if (saved && saved !== 'undefined' && saved !== 'null') {
-      return 'dashboard';
-    }
+    if (saved && saved !== 'undefined' && saved !== 'null') return 'dashboard';
     if (window.location.hash === '#dashboard') return 'dashboard';
-    if (window.location.hash === '#auth' || window.location.hash === '#login' || window.location.hash === '#signup') return 'auth';
+    if (['#auth', '#login', '#signup'].includes(window.location.hash)) return 'auth';
     return 'landing';
   });
 
   useEffect(() => {
     const handleHashChange = () => {
-      if (window.location.hash === '#dashboard') {
-        setCurrentView('dashboard');
-      } else if (window.location.hash === '#auth' || window.location.hash === '#login' || window.location.hash === '#signup') {
-        setCurrentView('auth');
-      } else if (window.location.hash === '' || window.location.hash === '#home' || window.location.hash === '#features' || window.location.hash === '#pricing') {
-        setCurrentView('landing');
-      }
+      if (window.location.hash === '#dashboard') setCurrentView('dashboard');
+      else if (['#auth', '#login', '#signup'].includes(window.location.hash)) setCurrentView('auth');
+      else if (!window.location.hash || ['#home', '#features', '#pricing'].includes(window.location.hash)) setCurrentView('landing');
     };
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
@@ -243,41 +230,23 @@ export default function App() {
 
   const navigateToView = (view) => {
     setCurrentView(view);
-    if (view === 'dashboard') {
-      window.location.hash = '#dashboard';
-    } else if (view === 'auth') {
-      window.location.hash = '#auth';
-    } else {
-      if (!window.location.hash || window.location.hash === '#dashboard' || window.location.hash === '#auth') {
-        window.location.hash = '#home';
-      }
-    }
+    window.location.hash = view === 'dashboard' ? '#dashboard' : view === 'auth' ? '#auth' : '#home';
   };
 
-  // Scroll listener for sticky header styling
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 15) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
-    };
+    const handleScroll = () => setScrolled(window.scrollY > 15);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Auth States
   const [user, setUser] = useState(() => {
     try {
       const saved = localStorage.getItem('user') || sessionStorage.getItem('user');
-      if (saved && saved !== 'undefined' && saved !== 'null') {
-        return JSON.parse(saved);
-      }
+      return saved && saved !== 'undefined' && saved !== 'null' ? JSON.parse(saved) : { username: 'Guest Developer', id: 'demo' };
     } catch (e) {
-      console.error("Error parsing user state:", e);
+      console.error('Error parsing user state:', e);
+      return { username: 'Guest Developer', id: 'demo' };
     }
-    return { username: 'Guest Developer', id: 'demo' };
   });
   const isGuestUser = !user || user.id === 'demo';
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -308,21 +277,16 @@ export default function App() {
   const [diagramUrl, setDiagramUrl] = useState('');
   const [activeTab, setActiveTab] = useState('api');
   const [generating, setGenerating] = useState(false);
+
   const [showChatWidget, setShowChatWidget] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [backendOnline, setBackendOnline] = useState(true);
   const [fileSearchQuery, setFileSearchQuery] = useState('');
   const [selectedFileInspector, setSelectedFileInspector] = useState(null);
-
-  // AI Chatbot States
-  const [chatMessages, setChatMessages] = useState([
-    { sender: 'ai', text: 'Hello! I am the Dokari Companion. Ask me any question about how to use the Dokari platform, upload files, check documentation health, or generate files.' }
-  ]);
+  const [chatMessages, setChatMessages] = useState([{ sender: 'ai', text: 'Hello! I am the Dokari Companion. Ask me any question about how to use the Dokari platform, upload files, check documentation health, or generate files.' }]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const chatEndRef = useRef(null);
-
-  // Documentation Health States
   const [docHealthScore, setDocHealthScore] = useState(DEMO_HEALTH.score);
   const [docHealthSuggestions, setDocHealthSuggestions] = useState(DEMO_HEALTH.suggestions);
   const [healthLoading, setHealthLoading] = useState(false);
@@ -330,63 +294,49 @@ export default function App() {
   const [selectedFixSuggestion, setSelectedFixSuggestion] = useState('');
   const [showFixModal, setShowFixModal] = useState(false);
   const [fixingLoading, setFixingLoading] = useState(false);
-
-  // New Project Form State
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDesc, setNewProjectDesc] = useState('');
   const [projectTemplate, setProjectTemplate] = useState('empty');
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
   const [creatingProject, setCreatingProject] = useState(false);
   const creatingProjectRef = useRef(false);
-
-  // Toast State
   const [toasts, setToasts] = useState([]);
-
-  // File Input Ref
   const fileInputRef = useRef(null);
   const [dragOver, setDragOver] = useState(false);
 
-  // Sync HTML class list with theme changes
   useEffect(() => {
     document.documentElement.className = theme + '-mode';
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  // Load projects list on startup / when user changes
   useEffect(() => {
-    if (user) {
-      loadProjects();
-    } else {
+    if (user) loadProjects();
+    else {
       setProjects([]);
       setCurrentProjectId('demo');
       setCurrentProject(null);
       setUploadedFiles([]);
-      setDocuments({ api: '', readme: '' });
+      setDocuments({ api: '', readme: '', architecture: '' });
       setDiagramUrl('');
       setDocHealthScore(0);
       setDocHealthSuggestions([]);
     }
   }, [user]);
 
-  // Auto-scroll chat to bottom
   useEffect(() => {
-    if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
+    if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
 
-  // Handle Loading files & documents when project changes
   useEffect(() => {
     if (!currentProjectId) {
       setCurrentProject(null);
       setUploadedFiles([]);
-      setDocuments({ api: '', readme: '' });
+      setDocuments({ api: '', readme: '', architecture: '' });
       setDiagramUrl('');
       setDocHealthScore(0);
       setDocHealthSuggestions([]);
       return;
     }
-
     if (currentProjectId === 'demo') {
       setCurrentProject(DEMO_PROJECT);
       setUploadedFiles(DEMO_FILES);
@@ -394,44 +344,19 @@ export default function App() {
       setDiagramUrl('');
       setDocHealthScore(DEMO_HEALTH.score);
       setDocHealthSuggestions(DEMO_HEALTH.suggestions);
-      setChatMessages([
-        { sender: 'ai', text: 'Hello! I am the Dokari Companion. Ask me any question about how to use the Dokari platform, upload files, check documentation health, or generate files.' }
-      ]);
+      setChatMessages([{ sender: 'ai', text: 'Hello! I am the Dokari Companion. Ask me any question about how to use the Dokari platform, upload files, check documentation health, or generate files.' }]);
       return;
     }
-
     if (!user) return;
-
-    const headers = {
-      'Authorization': String(user.id)
-    };
-
-    // 1. Fetch Project Details
+    const headers = { Authorization: String(user.id) };
     fetch(`${BACKEND_URL}/api/projects/${currentProjectId}`, { headers })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to load project details');
-        return res.json();
-      })
-      .then(project => {
-        setCurrentProject(project);
-        setBackendOnline(true);
-      })
-      .catch(err => {
-        console.error(err);
-        showToast('Failed to load project details', 'error');
-      });
-
-    // 2. Fetch Project Files
+      .then(res => { if (!res.ok) throw new Error('Failed to load project details'); return res.json(); })
+      .then(project => { setCurrentProject(project); setBackendOnline(true); })
+      .catch(err => { console.error(err); showToast('Failed to load project details', 'error'); });
     fetch(`${BACKEND_URL}/api/projects/${currentProjectId}/files`, { headers })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to load files');
-        return res.json();
-      })
+      .then(res => { if (!res.ok) throw new Error('Failed to load files'); return res.json(); })
       .then(files => {
-        const mapped = files.map(f => ({
-          filename: f.filename,
-          content: f.content || ''
-        }));
+        const mapped = files.map(f => ({ filename: f.filename, content: f.content || '' }));
         setUploadedFiles(mapped);
         localStorage.setItem(`dokari_files_${currentProjectId}`, JSON.stringify(mapped));
         fetchDocHealth(mapped);
@@ -440,39 +365,21 @@ export default function App() {
         console.error(err);
         const cached = localStorage.getItem(`dokari_files_${currentProjectId}`);
         if (cached) {
-          try {
-            const parsed = JSON.parse(cached);
-            setUploadedFiles(parsed);
-            fetchDocHealth(parsed);
-          } catch (e) {}
-        } else {
-          showToast('Failed to load project files', 'error');
-        }
+          try { const parsed = JSON.parse(cached); setUploadedFiles(parsed); fetchDocHealth(parsed); } catch (e) { console.error(e); }
+        } else showToast('Failed to load project files', 'error');
       });
-
-    // 3. Fetch Project Documents
     fetch(`${BACKEND_URL}/api/projects/${currentProjectId}/documents`, { headers })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to load documents');
-        return res.json();
-      })
+      .then(res => { if (!res.ok) throw new Error('Failed to load documents'); return res.json(); })
       .then(docs => {
-        let apiContent = '';
-        let readmeContent = '';
-        let architectureContent = '';
-
+        let apiContent = '', readmeContent = '', architectureContent = '';
         docs.forEach(doc => {
           if (doc.type === 'api') apiContent = doc.content;
           if (doc.type === 'readme') readmeContent = doc.content;
           if (doc.type === 'architecture') architectureContent = doc.content;
         });
-
         setDocuments({ api: apiContent, readme: readmeContent, architecture: architectureContent });
       })
-      .catch(err => {
-        console.error(err);
-        showToast('Failed to load project documents', 'error');
-      });
+      .catch(err => { console.error(err); showToast('Failed to load project documents', 'error'); });
   }, [currentProjectId, user]);
 
   const normalizeMermaidDiagram = (content) => {
@@ -481,6 +388,8 @@ export default function App() {
     const diagramLines = start >= 0 ? lines.slice(start) : lines;
 
     return diagramLines.map(line => {
+      line = line.replace(/^(\s*subgraph\s+)([A-Za-z][A-Za-z0-9_]*)\s+\[\"([^\"]+)\"\]/i, '$1$2["$3"]');
+      line = line.replace(/\[\(\"([^\"]+)\"\)\]/g, '[($1)]');
       let normalizedLine = line.replace(
         /^(\s*)([A-Za-z][A-Za-z0-9_]*)\s+--\s*([^-\n]+?)\s*-->\s*([A-Za-z][A-Za-z0-9_]*)\s*(?:\([^()\n]+\))?\s*$/,
         '$1$2 -->|$3| $4'
@@ -503,37 +412,47 @@ export default function App() {
       const renderDiagram = async () => {
         const container = document.getElementById('mermaid-container');
         if (container) {
-          container.removeAttribute('data-processed');
-          const diagram = document.createElement('pre');
-          diagram.className = 'mermaid';
-          diagram.style.background = 'transparent';
-          diagram.style.border = 'none';
-          diagram.style.margin = '0';
-          diagram.style.padding = '0';
-          diagram.textContent = normalizeMermaidDiagram(documents.architecture);
-          container.replaceChildren(diagram);
           window.mermaid.initialize({
             startOnLoad: false,
             theme: theme === 'dark' ? 'dark' : 'default',
             securityLevel: 'loose',
             flowchart: { useMaxWidth: true, htmlLabels: true }
           });
-          window.mermaid.run({
-            nodes: [diagram],
-          }).then(() => {
-            const svg = container.querySelector('.mermaid svg');
-            if (svg) {
-              const viewBox = svg.getAttribute('viewBox')?.split(/\s+/).map(Number);
-              if (viewBox?.length === 4 && viewBox[2] > 0 && viewBox[3] > 0) {
-                svg.style.width = `${viewBox[2]}px`;
-                svg.style.height = `${viewBox[3]}px`;
-              }
-              svg.style.maxWidth = 'none';
-              svg.style.display = 'block';
-              svg.style.transform = `translate(${architecturePan.x}px, ${architecturePan.y}px) scale(${architectureZoom})`;
-              svg.style.transformOrigin = 'center center';
+
+          const normalized = normalizeMermaidDiagram(documents.architecture);
+          const styleFree = normalized.split('\n').filter(line => !/^\s*style\s+/i.test(line)).join('\n');
+          const fallback = 'graph TD\n  Architecture["Architecture Map"]\n  Source["Generated project structure"]\n  Architecture --> Source';
+          const candidates = [normalized, styleFree, fallback];
+          let renderedSvg = '';
+
+          for (const candidate of candidates) {
+            try {
+              await window.mermaid.parse(candidate);
+              const result = await window.mermaid.render(`architecture-${Date.now()}`, candidate);
+              renderedSvg = result.svg;
+              break;
+            } catch (error) {
+              console.warn('Mermaid diagram candidate rejected:', error);
             }
-          }).catch(e => console.error('Mermaid error:', e));
+          }
+
+          if (!renderedSvg) {
+            throw new Error('Unable to render architecture diagram');
+          }
+
+          container.innerHTML = renderedSvg;
+          const svg = container.querySelector('svg');
+          if (svg) {
+            const viewBox = svg.getAttribute('viewBox')?.split(/\s+/).map(Number);
+            if (viewBox?.length === 4 && viewBox[2] > 0 && viewBox[3] > 0) {
+              svg.style.width = `${viewBox[2]}px`;
+              svg.style.height = `${viewBox[3]}px`;
+            }
+            svg.style.maxWidth = 'none';
+            svg.style.display = 'block';
+            svg.style.transform = `translate(${architecturePan.x}px, ${architecturePan.y}px) scale(${architectureZoom})`;
+            svg.style.transformOrigin = 'center center';
+          }
         }
       };
 
@@ -1058,7 +977,7 @@ export default function App() {
   };
 
   // Generate Documentation
-  const generateDocumentation = () => {
+  const generateDocumentation = (requestedType = null) => {
     if (isGuestUser) {
       triggerAuthPrompt('Please sign in or sign up to run AI generation.');
       return;
@@ -1072,8 +991,20 @@ export default function App() {
       return;
     }
 
+    const missingTypes = ['api', 'readme', 'architecture'].filter(type => !documents[type]);
+    const typesToGenerate = requestedType === 'all'
+      ? ['api', 'readme', 'architecture']
+      : requestedType
+        ? [requestedType]
+        : missingTypes;
+
+    if (typesToGenerate.length === 0) {
+      showToast('This documentation is already generated.', 'info');
+      return;
+    }
+
     setGenerating(true);
-    showToast('AI is generating documentation...', 'info');
+    showToast(`AI is generating ${typesToGenerate.length === 1 ? typesToGenerate[0] : 'missing documentation'}...`, 'info');
 
     const filesContentArray = uploadedFiles.map(f => ({
       name: f.filename,
@@ -1093,27 +1024,31 @@ export default function App() {
       return res.json();
     });
 
-    Promise.all([
-      request('/generate/api', { project_id: currentProjectId, files_content: filesContentArray }),
-      request('/generate/readme', {
+    const requests = {
+      api: () => request('/generate/api', { project_id: currentProjectId, files_content: filesContentArray })
+        .then(data => ({ type: 'api', content: data.documentation })),
+      readme: () => request('/generate/readme', {
         project_info: { name: currentProject.name, description: currentProject.description },
         files_content: filesContentArray
-      }),
-      request('/generate/diagram', { code_structure: codeStructure })
-    ])
-      .then(([apiData, readmeData, diagramData]) => {
-        const architecture = diagramData.mermaid_code || (diagramData.diagram_url
-          ? `IMAGE_URL:${diagramData.diagram_url.replace('localhost', HOST_IP)}`
-          : 'graph TD\n    ErrorNode["No valid diagram data returned from AI service"]');
-        const generatedDocuments = {
-          api: apiData.documentation,
-          readme: readmeData.readme,
-          architecture
-        };
-        setDocuments(prev => ({ ...prev, ...generatedDocuments }));
-        return Promise.all(Object.entries(generatedDocuments).map(([type, content]) => saveDocToDB(type, content, false)));
+      }).then(data => ({ type: 'readme', content: data.readme })),
+      architecture: () => request('/generate/diagram', { code_structure: codeStructure })
+        .then(data => ({
+          type: 'architecture',
+          content: data.mermaid_code || (data.diagram_url
+            ? `IMAGE_URL:${data.diagram_url.replace('localhost', HOST_IP)}`
+            : 'graph TD\n    ErrorNode["No valid diagram data returned from AI service"]')
+        }))
+    };
+
+    Promise.all(typesToGenerate.map(type => requests[type]()))
+      .then(generatedDocuments => {
+        setDocuments(prev => ({
+          ...prev,
+          ...Object.fromEntries(generatedDocuments.map(({ type, content }) => [type, content]))
+        }));
+        return Promise.all(generatedDocuments.map(({ type, content }) => saveDocToDB(type, content, false)));
       })
-      .then(() => showToast('API docs, README, and architecture generated successfully!', 'success'))
+      .then(() => showToast(`${typesToGenerate.length === 1 ? typesToGenerate[0] : 'Missing documentation'} generated successfully!`, 'success'))
       .catch(err => {
         console.error(err);
         showToast('Failed to generate all documentation.', 'error');
@@ -1350,13 +1285,6 @@ export default function App() {
           projects={projects}
           setCurrentProjectId={setCurrentProjectId}
           triggerAuthPrompt={triggerAuthPrompt}
-          architectureZoom={architectureZoom}
-          updateArchitectureZoom={updateArchitectureZoom}
-          resetArchitectureView={resetArchitectureView}
-          handleArchitectureWheel={handleArchitectureWheel}
-          handleArchitecturePointerDown={handleArchitecturePointerDown}
-          handleArchitecturePointerMove={handleArchitecturePointerMove}
-          stopArchitecturePointer={stopArchitecturePointer}
         />
       )}
 
